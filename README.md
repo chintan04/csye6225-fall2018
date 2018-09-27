@@ -16,5 +16,9 @@ Deploying:
 - Runner class contains the main method.
 - Right click on the file and click run to start the application on the local server.
 
+# Instructions to run tests :
+- From the maven window select lifecycle
+- Select test under lifecycle & run maven
+
 # Travis CI :
 https://travis-ci.com/
