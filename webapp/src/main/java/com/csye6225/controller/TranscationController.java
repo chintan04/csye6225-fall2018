@@ -29,7 +29,8 @@ public class TranscationController {
     @ResponseBody
     public String getTransaction(HttpServletRequest request)
     {
-        String status = AuthFilter.authorizeUser(request,userJpaRespository);
+        //String status = AuthFilter.authorizeUser(request,userJpaRespository);
+        String status = "ok";
         if(status.equals("ok"))
         {
             List<Transaction> transactionList = new ArrayList<Transaction>(transactionJpaRepository.findAll());
@@ -53,14 +54,15 @@ public class TranscationController {
     @ResponseBody
     public String createTransaction(@RequestBody Transaction transaction, HttpServletRequest request)
     {
-        String status = AuthFilter.authorizeUser(request,userJpaRespository);
+        //String status = AuthFilter.authorizeUser(request,userJpaRespository);
+        String status = "ok";
         if(status.equals("ok"))
         {
             Users user = new Users();
             user.setUserId(1);
             user.setUsername("xyz");
             user.setPwd("xyz");
-            transaction.setUser(user);
+            //transaction.setUser(user);
             transactionJpaRepository.save(transaction);
             return "created";
 
@@ -71,7 +73,8 @@ public class TranscationController {
     @PutMapping(value="/{id}")
     @ResponseBody
     public String updateTransaction(@RequestBody Transaction transaction, HttpServletRequest request,@PathVariable String id) {
-        String status = AuthFilter.authorizeUser(request,userJpaRespository);
+        //String status = AuthFilter.authorizeUser(request,userJpaRespository);
+        String status = "ok";
         if (status.equals("ok"))
         {
             Transaction transc = transactionJpaRepository.findOne(id);
@@ -96,7 +99,8 @@ public class TranscationController {
     @DeleteMapping(value="/{id}")
     @ResponseBody
     public String deleteTransaction (@PathVariable String id,HttpServletRequest request) {
-        String status = AuthFilter.authorizeUser(request,userJpaRespository);
+        //String status = AuthFilter.authorizeUser(request,userJpaRespository);
+        String status = "ok";
         if(status.equals("ok")){
             transactionJpaRepository.delete(id);
             return "deleted";

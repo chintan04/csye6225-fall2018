@@ -39,6 +39,7 @@ public class Users {
         this.userId = userId;
     }
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany()
+    @JoinColumn(name = "tId")
     private List<Transaction> transactionList;
 }

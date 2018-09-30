@@ -8,23 +8,23 @@ import javax.persistence.ManyToOne;
 @Entity
 public class Transaction {
     @Id
-    private String id;
+    private String tId;
     private String description;
     private String merchant;
     private String amount;
     private String date;
     private String category;
-    @ManyToOne
+    /*@ManyToOne
     @JoinColumn(name = "userId",nullable = false)
-    private Users user;
+    private Users user;*/
 
 
-    public String getId() {
-        return id;
+    public String gettId() {
+        return tId;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void settId(String tId) {
+        this.tId = tId;
     }
 
     public String getDescription() {
@@ -67,20 +67,11 @@ public class Transaction {
         this.category = category;
     }
 
-    public Users getUser() {
-        return user;
-    }
-
-    public void setUser(Users user) {
-        this.user = user;
-    }
-
-
     public Transaction(){}
 
     public Transaction(String id, String description, String merchant, String amount, String date, String category)
     {
-        this.id = id;
+        this.tId = id;
         this.description = description;
         this.merchant=merchant;
         this.amount=amount;
