@@ -21,12 +21,15 @@ public class TranscationController {
     @Autowired
     private TransactionJpaRepository transactionJpaRepository;
 
+    @Autowired
+    private UserJpaRespository userJpaRespository;
+
 
     @GetMapping()
     @ResponseBody
     public String getTransaction(HttpServletRequest request)
     {
-        String status = AuthFilter.authorizeUser(request);
+        String status = AuthFilter.authorizeUser(request,userJpaRespository);
         if(status.equals("ok"))
         {
             List<Transaction> transactionList = new ArrayList<Transaction>(transactionJpaRepository.findAll());
@@ -50,7 +53,7 @@ public class TranscationController {
     @ResponseBody
     public String createTransaction(@RequestBody Transaction transaction, HttpServletRequest request)
     {
-        String status = AuthFilter.authorizeUser(request);
+        String status = AuthFilter.authorizeUser(request,userJpaRespository);
         if(status.equals("ok"))
         {
             Users user = new Users();
@@ -65,22 +68,37 @@ public class TranscationController {
         return status;
     }
 
-    @PutMapping()
+    @PutMapping(value="/{id}")
     @ResponseBody
-    public String updateTransaction(@RequestBody Transaction transaction, HttpServletRequest request) {
-        String status = AuthFilter.authorizeUser(request);
+    public String updateTransaction(@RequestBody Transaction transaction, HttpServletRequest request,@PathVariable String id) {
+        String status = AuthFilter.authorizeUser(request,userJpaRespository);
         if (status.equals("ok"))
         {
+            Transaction transc = transactionJpaRepository.findOne(id);
+            if(transaction.getDescription()!=null)
+                transc.setDescription(transaction.getDescription());
+
+            if(transaction.getAmount()!=null)
+                transc.setAmount(transaction.getAmount());
+
+            if(transaction.getCategory()!=null)
+                transc.setCategory(transaction.getCategory());
+
+            if(transaction.getMerchant()!=null)
+                transc.setMerchant(transaction.getMerchant());
+
+            transactionJpaRepository.save(transc);
             return "created";
         }
         return status;
     }
 
-    @DeleteMapping
+    @DeleteMapping(value="/{id}")
     @ResponseBody
-    public String deleteTransaction (HttpServletRequest request) {
-        String status = AuthFilter.authorizeUser(request);
+    public String deleteTransaction (@PathVariable String id,HttpServletRequest request) {
+        String status = AuthFilter.authorizeUser(request,userJpaRespository);
         if(status.equals("ok")){
+            transactionJpaRepository.delete(id);
             return "deleted";
 
         }

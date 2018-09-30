@@ -14,10 +14,7 @@ import java.util.List;
 
 public class AuthFilter {
 
-    @Autowired
-    static UserJpaRespository userJpaRespository;
-
-    public static String authorizeUser(HttpServletRequest request)
+    public static String authorizeUser(HttpServletRequest request,UserJpaRespository userJpaRespository)
     {
         final String authorization = request.getHeader("Authorization");
         if (authorization != null && authorization.toLowerCase().startsWith("basic")) {
