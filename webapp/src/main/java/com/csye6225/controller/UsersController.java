@@ -37,6 +37,7 @@ public class UsersController {
             String pw_hash = BCrypt.hashpw(user.getPwd(), BCrypt.gensalt());
             user.setPwd(pw_hash);
             userJpaRespository.save(user);
+
             return Collections.singletonMap("response", "You are successfully logged in");
         }
         catch (Exception ex)
