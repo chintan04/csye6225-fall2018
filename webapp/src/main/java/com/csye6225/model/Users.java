@@ -6,12 +6,7 @@ import java.util.List;
 @Entity
 public class Users {
 
-
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "userId")
-    private int userId;
-
     private String username;
     private String pwd;
 
@@ -29,14 +24,6 @@ public class Users {
 
     public void setPwd(String pwd) {
         this.pwd = pwd;
-    }
-
-    public int getUserId() {
-        return userId;
-    }
-
-    public void setUserId(int userId) {
-        this.userId = userId;
     }
 
     @OneToMany(mappedBy = "user")
