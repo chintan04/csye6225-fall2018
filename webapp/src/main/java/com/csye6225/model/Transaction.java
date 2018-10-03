@@ -4,11 +4,12 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import java.util.UUID;
 
 @Entity
 public class Transaction {
     @Id
-    private String id;
+    private UUID id;
     private String description;
     private String merchant;
     private String amount;
@@ -19,11 +20,11 @@ public class Transaction {
     private Users user;
 
 
-    public String getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
@@ -78,7 +79,7 @@ public class Transaction {
 
     public Transaction(){}
 
-    public Transaction(String id, String description, String merchant, String amount, String date, String category)
+    public Transaction(UUID id, String description, String merchant, String amount, String date, String category)
     {
         this.id = id;
         this.description = description;
