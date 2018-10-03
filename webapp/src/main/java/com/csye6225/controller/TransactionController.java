@@ -30,12 +30,13 @@ public class TransactionController {
 
     @GetMapping()
     @ResponseBody
-    public String getTransaction(HttpServletRequest request) {
+    public List<Transaction> getTransaction(HttpServletRequest request) {
         String status = AuthFilter.authorizeUser(request, userJpaRespository);
+        List<Transaction> transactionListtemp = new ArrayList<Transaction>(transactionJpaRepository.findAll());
         if (status.equals("ok")) {
-            List<Transaction> transactionListtemp = new ArrayList<Transaction>(transactionJpaRepository.findAll());
+
             List<Transaction> transactionListfinal = new ArrayList<>();
-            
+
             final String authorization = request.getHeader("Authorization");
             String base64Credentials = authorization.substring("Basic".length()).trim();
             byte[] credDecoded = Base64.getDecoder().decode(base64Credentials);
@@ -48,20 +49,21 @@ public class TransactionController {
                     transactionListfinal.add(t);
                 }
             }
-            ObjectMapper mapper = new ObjectMapper();
-            try {
-                String jsonString = mapper.writeValueAsString(transactionListfinal);
-                System.out.println(jsonString);
-                transactionListfinal=null;
-                return jsonString;
-            } catch (Exception ex) {
-            }
+            return transactionListfinal;
+//            ObjectMapper mapper = new ObjectMapper();
+//            try {
+//                String jsonString = mapper.writeValueAsString(transactionListfinal);
+//                System.out.println(jsonString);
+//                transactionListfinal=null;
+//                return jsonString;
+//            } catch (Exception ex) {
+//            }
             /*Gson gson = new Gson();
             jsonString = gson.toJson(transactionList);*/
 
 
         }
-        return status;
+        return null;
     }
 
     @PostMapping()
@@ -99,7 +101,7 @@ public class TransactionController {
 
     @PutMapping(value = "/{id}")
     @ResponseBody
-    public String updateTransaction(@RequestBody Transaction transaction, HttpServletRequest request, @PathVariable String id) {
+    public String updateTransaction(@RequestBody Transaction transaction, HttpServletRequest request, @PathVariable UUID id) {
         String status = AuthFilter.authorizeUser(request, userJpaRespository);
         if (status.equals("ok")) {
             Transaction transc = transactionJpaRepository.findOne(id);
@@ -123,7 +125,7 @@ public class TransactionController {
 
     @DeleteMapping(value = "/{id}")
     @ResponseBody
-    public String deleteTransaction(@PathVariable String id, HttpServletRequest request) {
+    public String deleteTransaction(@PathVariable UUID id, HttpServletRequest request) {
         String status = AuthFilter.authorizeUser(request, userJpaRespository);
         if (status.equals("ok")) {
             transactionJpaRepository.delete(id);
