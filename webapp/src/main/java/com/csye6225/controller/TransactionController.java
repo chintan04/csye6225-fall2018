@@ -13,10 +13,11 @@ import sun.net.www.protocol.http.AuthCacheImpl;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/transaction")
-public class TranscationController {
+public class TransactionController {
 
     @Autowired
     private TransactionJpaRepository transactionJpaRepository;
@@ -61,6 +62,8 @@ public class TranscationController {
             user.setUsername("xyz");
             user.setPwd("xyz");
             transaction.setUser(user);
+            UUID u=UUID.randomUUID();
+            transaction.setId(u);
             transactionJpaRepository.save(transaction);
             return "created";
 
