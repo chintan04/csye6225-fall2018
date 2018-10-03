@@ -35,6 +35,7 @@ public class TransactionController {
         if (status.equals("ok")) {
             List<Transaction> transactionListtemp = new ArrayList<Transaction>(transactionJpaRepository.findAll());
             List<Transaction> transactionListfinal = new ArrayList<>();
+            
             final String authorization = request.getHeader("Authorization");
             String base64Credentials = authorization.substring("Basic".length()).trim();
             byte[] credDecoded = Base64.getDecoder().decode(base64Credentials);
