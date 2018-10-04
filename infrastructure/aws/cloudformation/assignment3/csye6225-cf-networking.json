@@ -1,0 +1,221 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+  "Parameters" : {
+    "VPCCIDR" : {
+      "Type" : "String",
+      "Description" : "IP Address range for the VPN connected VPC",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+    "subnet1" : {
+      "Type" : "String",
+      "Description" : "IP Address range for the VPN connected VPC",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+    "subnet2" : {
+      "Type" : "String",
+      "Description" : "IP Address range for the VPN connected VPC",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+    "subnet3" : {
+      "Type" : "String",
+      "Description" : "IP Address range for the VPN connected VPC",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+    "subnet4" : {
+      "Type" : "String",
+      "Description" : "IP Address range for the VPN connected VPC",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+    "subnet5" : {
+      "Type" : "String",
+      "Description" : "IP Address range for the VPN connected VPC",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+    "subnet6" : {
+      "Type" : "String",
+      "Description" : "IP Address range for the VPN connected VPC",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    }
+  },
+    
+  "Resources" :
+  {
+      "myVPC" : { 
+       "Type" : "AWS::EC2::VPC",
+       "Properties":
+       {
+          "CidrBlock" : { "Ref" : "VPCCIDR" },
+          "InstanceTenancy" : "default",
+          "Tags": [{"Key" : "Name", "Value" : "SampleVPC"}],
+          "EnableDnsSupport" : "true",
+          "EnableDnsHostnames" : "true"
+       }
+      },
+      
+
+      
+        "subnetA" : { 
+        "Type" : "AWS::EC2::Subnet",
+        "Properties" :
+        {
+          "VpcId" : { "Ref" : "myVPC" },
+          "MapPublicIpOnLaunch": "true",
+          "CidrBlock" : { "Ref" : "subnet1" },
+          "AvailabilityZone" : "us-east-1a",
+          "Tags" : [ { "Key" : "Name", "Value" : "meraSubnet1private" } ]
+          }
+        },
+      
+      
+      
+        "subnetB" : {
+        "Type" : "AWS::EC2::Subnet",
+        "Properties" :
+        {
+          "VpcId" : { "Ref" : "myVPC" },
+          "MapPublicIpOnLaunch": "true",
+          "CidrBlock" : { "Ref" : "subnet2" },
+          "AvailabilityZone" : "us-east-1b",
+          "Tags" : [ { "Key" : "Name", "Value" : "meraSubnet2public" } ]
+
+        }
+      },
+    
+      
+      
+        "subnetC" : {
+        "Type" : "AWS::EC2::Subnet",
+        "Properties" :
+        {
+          "VpcId" : { "Ref" : "myVPC" },
+          "MapPublicIpOnLaunch": "true",
+          "CidrBlock" : { "Ref" : "subnet3" },
+          "AvailabilityZone" : "us-east-1a",
+          "Tags" : [ { "Key" : "Name", "Value" : "meraSubnet3private" } ]
+        }
+      },
+
+      
+      
+        "subnetD" : {
+        "Type" : "AWS::EC2::Subnet",
+        "Properties" :
+        {
+          "VpcId" : { "Ref" : "myVPC" },
+          "MapPublicIpOnLaunch": "true",
+          "CidrBlock" : { "Ref" : "subnet4" },
+          "AvailabilityZone" : "us-east-1b",
+          "Tags" : [ { "Key" : "Name", "Value" : "meraSubnet4public" } ]
+
+        }
+      },
+      "subnetE" : {
+        "Type" : "AWS::EC2::Subnet",
+        "Properties" :
+        {
+          "VpcId" : { "Ref" : "myVPC" },
+          "AvailabilityZone" : "us-east-1a",
+          "CidrBlock" : { "Ref" : "subnet5" },
+          "Tags" : [ { "Key" : "Name", "Value" : "meraSubnet5private" } ]
+
+        }
+      },
+      
+      
+      
+        "subnetF" : {
+        "Type" : "AWS::EC2::Subnet",
+        "Properties" :
+        {
+          "VpcId" : { "Ref" : "myVPC" },
+          "AvailabilityZone" : "us-east-1b",
+          "CidrBlock" : { "Ref" : "subnet6" },
+          "Tags" : [ { "Key" : "Name", "Value" : "meraSubnet6public" } ]
+
+        }
+      },
+      "myInternetGateway" : {
+        "Type" : "AWS::EC2::InternetGateway"
+     },
+        "AttachGateway" : {
+            "Type" : "AWS::EC2::VPCGatewayAttachment",
+            "Properties" : {
+               "VpcId" : { "Ref" : "myVPC" },
+               "InternetGatewayId" : { "Ref" : "myInternetGateway" }
+            }
+         },
+
+    
+    
+    "myRouteTable" : {
+      
+        "Type": "AWS::EC2::RouteTable",
+        "Properties":
+        {
+            "VpcId":
+            {
+                "Ref": "myVPC"
+            }
+        }
+      },
+
+        "myRoute" : {
+          "Type" : "AWS::EC2::Route",
+          "Properties" : {
+             "RouteTableId" : { "Ref" : "myRouteTable" },
+             "DestinationCidrBlock":"0.0.0.0/0",
+             "GatewayId" : { "Ref" : "myInternetGateway" }
+          }
+       },
+      
+
+      "association1":
+      {
+        "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+        "Properties" :
+        {
+          "RouteTableId" : {"Ref":"myRouteTable"},
+          "SubnetId" : {"Ref":"subnetB"}
+        }
+      },
+      "association2":
+      {
+        "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+        "Properties" :
+        {
+          "RouteTableId" : {"Ref":"myRouteTable"},
+          "SubnetId" : {"Ref":"subnetD"}
+        }
+      },
+      "association3":
+      {
+        "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+        "Properties" :
+        {
+          "RouteTableId" : {"Ref":"myRouteTable"},
+          "SubnetId" : {"Ref":"subnetF"}
+        }
+      }
+    },
+
+    "Outputs": {
+      "VpcId": {
+        "Description": "The ID of the VPC",
+        "Value": {
+          "Ref": "myVPC"
+        },
+        "Export": {
+          "Name": "csye6225vpcid"
+        }
+      },
+      "subnetPublic1": {
+        "Description": "Public subnet",
+        "Value": {
+          "Ref": "subnetF"
+        },
+        "Export": {
+          "Name": "csye6225subid"
+        }
+      }
+    }
+  }
