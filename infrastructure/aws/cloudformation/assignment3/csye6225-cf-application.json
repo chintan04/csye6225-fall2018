@@ -1,0 +1,105 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+
+  "Description": "AWS CloudFormation Template",
+
+
+  "Resources" :
+  {
+      "webserverSecurityGroup" : { 
+       "Type" : "AWS::EC2::SecurityGroup",
+       "Properties":
+       {
+          "GroupName" : "WebServer",
+          "GroupDescription" : "Security group for EC2 instance Web server",
+          "VpcId" : {"Fn::ImportValue" : "csye6225vpcid"},
+          "Tags": [
+          {
+            "Key": "Name",
+            "Value": "csye6225-webapp"
+          }],
+
+          "SecurityGroupIngress": [
+            {
+              "IpProtocol": "tcp",
+              "FromPort": "22",
+              "ToPort": "22",
+              "CidrIp": "0.0.0.0/0"
+            },
+            {
+                "IpProtocol": "tcp",
+                "FromPort": "80",
+                "ToPort": "80",
+                "CidrIp": "0.0.0.0/0"
+              },
+              {
+                "IpProtocol": "tcp",
+                "FromPort": "443",
+                "ToPort": "443",
+                "CidrIp": "0.0.0.0/0"
+              }
+          ]
+       }
+     },
+     "dbserverSecurityGroup":
+            {
+                  "Type": "AWS::EC2::SecurityGroup",
+                  "Properties": {
+                    "GroupName" : "DBServer",
+                    "VpcId" : {"Fn::ImportValue" : "csye6225vpcid"},
+                    "GroupDescription": "Security group for EC2 instance - DB server",
+                    "Tags": [
+                    {
+                      "Key": "Name",
+                      "Value": "csye6225-rds"
+                    }],
+          
+                    "SecurityGroupIngress": [
+                      {
+                        "IpProtocol": "tcp",
+                        "FromPort": "5432",
+                        "ToPort": "5432",
+                        "SourceSecurityGroupId" : { "Fn::GetAtt":["webserverSecurityGroup","GroupId"]}
+                      }
+                    ]
+                  }
+                },
+
+      "EC2instance" : {
+                  "Type" : "AWS::EC2::Instance",
+                  "Properties" : {
+                      "InstanceType" : "t2.micro",
+                      "ImageId" : "ami-9887c6e7",
+                      "KeyName" : "MyEC2KeyPair",
+                      "Tags": [{
+                        "Key" : "Name",
+                        "Value" : "MyEC2Instance"
+                      }],
+                      "BlockDeviceMappings" : [
+                        {
+                           "DeviceName" : "/dev/sdm",
+                           "Ebs" : {
+                              "VolumeType" : "gp2",
+                              "DeleteOnTermination" : "false",
+                              "VolumeSize" : "20"
+                           }
+                        },
+                        {
+                           "DeviceName" : "/dev/sdk",
+                           "NoDevice" : {}
+                        }
+                     ],
+                      "NetworkInterfaces": [ {
+                        "AssociatePublicIpAddress": "true",
+                        "DeviceIndex": "0",
+                        "GroupSet": [{"Ref" : "webserverSecurityGroup"}],
+                        "SubnetId": {"Fn::ImportValue" : "csye6225subid"}
+                        } ]
+                      }
+
+                
+  }
+  
+
+}
+}
