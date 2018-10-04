@@ -30,14 +30,14 @@ public class AuthFilter {
                 if (u.getUsername().equals(username)) {
                     if(BCrypt.checkpw(pwd, u.getPwd()))
                     {
-                        return "ok";
+                        return username;
                     }
                 }
             }
-            return "Authentication Failed";
+            return null;
         }
         else {
-            return "You are not authorized user";
+            return null;
         }
     }
 }

@@ -1,5 +1,7 @@
 package com.csye6225.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
@@ -68,6 +70,7 @@ public class Transaction {
         this.category = category;
     }
 
+    @JsonIgnore
     public Users getUser() {
         return user;
     }
