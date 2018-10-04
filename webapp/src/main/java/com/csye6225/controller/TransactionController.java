@@ -8,13 +8,17 @@ import com.csye6225.repository.UserJpaRespository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.util.JSONWrappedObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.web.bind.annotation.*;
-import sun.net.www.protocol.http.AuthCacheImpl;
+
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @RestController
@@ -27,111 +31,130 @@ public class TransactionController {
     @Autowired
     private UserJpaRespository userJpaRespository;
 
-
-    @GetMapping()
+    @GetMapping
     @ResponseBody
-    public List<Transaction> getTransaction(HttpServletRequest request) {
-        String status = AuthFilter.authorizeUser(request, userJpaRespository);
-        List<Transaction> transactionListtemp = new ArrayList<Transaction>(transactionJpaRepository.findAll());
-        if (status.equals("ok")) {
-
+    public void getTransaction(HttpServletRequest request, HttpServletResponse response) {
+        try {
+            String username = AuthFilter.authorizeUser(request, userJpaRespository);
+            List<Transaction> transactionListtemp = new ArrayList<Transaction>(transactionJpaRepository.findAll());
             List<Transaction> transactionListfinal = new ArrayList<>();
-
-            final String authorization = request.getHeader("Authorization");
-            String base64Credentials = authorization.substring("Basic".length()).trim();
-            byte[] credDecoded = Base64.getDecoder().decode(base64Credentials);
-            String credentials = new String(credDecoded, StandardCharsets.UTF_8);
-            // credentials = username:password
-            final String[] values = credentials.split(":", 2);
-            String username = values[0];
-            for (Transaction t : transactionListtemp) {
-                if (t.getUser().getUsername().equals(username)){
-                    transactionListfinal.add(t);
+            if (username != null) {
+                for (Transaction t : transactionListtemp) {
+                    if (t.getUser().getUsername().equals(username)) {
+                        transactionListfinal.add(t);
+                    }
                 }
+                ObjectMapper mapper = new ObjectMapper();
+                String jsonString = mapper.writeValueAsString(transactionListfinal);
+                response.setStatus(HttpServletResponse.SC_OK);
+                response.setContentType("application/json");
+                response.getWriter().write(jsonString);
+            } else {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             }
-            return transactionListfinal;
-//            ObjectMapper mapper = new ObjectMapper();
-//            try {
-//                String jsonString = mapper.writeValueAsString(transactionListfinal);
-//                System.out.println(jsonString);
-//                transactionListfinal=null;
-//                return jsonString;
-//            } catch (Exception ex) {
-//            }
-            /*Gson gson = new Gson();
-            jsonString = gson.toJson(transactionList);*/
-
-
+        } catch (Exception ex) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         }
-        return null;
     }
 
-    @PostMapping()
+    @PostMapping
     @ResponseBody
-    public String createTransaction(@RequestBody Transaction transaction, HttpServletRequest request) {
-        String status = AuthFilter.authorizeUser(request, userJpaRespository);
-        if (status.equals("ok")) {
-            final String authorization = request.getHeader("Authorization");
-            if (authorization != null && authorization.toLowerCase().startsWith("basic")) {
-                // Authorization: Basic base64credentials
-                String base64Credentials = authorization.substring("Basic".length()).trim();
-                byte[] credDecoded = Base64.getDecoder().decode(base64Credentials);
-                String credentials = new String(credDecoded, StandardCharsets.UTF_8);
-                // credentials = username:password
-                final String[] values = credentials.split(":", 2);
-                String username = values[0];
-                String pwd = values[1];
-                List<Users> userlist = userJpaRespository.findAll();
-                for (Users u : userlist) {
-                    if (u.getUsername().equals(username)) {
-                        if (BCrypt.checkpw(pwd, u.getPwd())) {
+    public void createTransaction(@RequestBody Transaction transaction, HttpServletRequest request, HttpServletResponse response) {
+        try {
+            String username = AuthFilter.authorizeUser(request, userJpaRespository);
+            List<Users> userlist = userJpaRespository.findAll();
+            if (username != null) {
+                if (transaction.getAmount().equals("") || transaction.getCategory().equals("") ||
+                        transaction.getDescription().equals("") || transaction.getMerchant().equals("")) {
+                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                } else {
+                    UUID u1 = UUID.randomUUID();
+                    transaction.setId(u1);
+                    transaction.setDate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("MM/dd/yyyy")));
+                    for (Users u : userlist) {
+                        if (u.getUsername().equals(username)) {
                             transaction.setUser(u);
                             break;
                         }
                     }
+                    transactionJpaRepository.save(transaction);
+                    response.setStatus(HttpServletResponse.SC_CREATED);
                 }
+            } else {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             }
-            UUID u1 = UUID.randomUUID();
-            transaction.setId(u1);
-            transactionJpaRepository.save(transaction);
-            return "created";
+        } catch (Exception ex) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         }
-        return status;
     }
 
     @PutMapping(value = "/{id}")
     @ResponseBody
-    public String updateTransaction(@RequestBody Transaction transaction, HttpServletRequest request, @PathVariable UUID id) {
-        String status = AuthFilter.authorizeUser(request, userJpaRespository);
-        if (status.equals("ok")) {
-            Transaction transc = transactionJpaRepository.findOne(id);
-            if (transaction.getDescription() != null)
-                transc.setDescription(transaction.getDescription());
+    public void updateTransaction(@RequestBody Transaction transaction, HttpServletRequest request, @PathVariable UUID id, HttpServletResponse response) {
+        try {
+            String username = AuthFilter.authorizeUser(request, userJpaRespository);
+            if (username != null) {
+                if (id == null || id.toString().trim().length() == 0) {
+                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                } else {
+                    Transaction transc = transactionJpaRepository.findOne(id);
+                    if (transc != null) {
+                        if (transc.getUser().getUsername().equals(username)) {
+                            if (transaction.getDescription() != null)
+                                transc.setDescription(transaction.getDescription());
 
-            if (transaction.getAmount() != null)
-                transc.setAmount(transaction.getAmount());
+                            if (transaction.getAmount() != null)
+                                transc.setAmount(transaction.getAmount());
 
-            if (transaction.getCategory() != null)
-                transc.setCategory(transaction.getCategory());
+                            if (transaction.getCategory() != null)
+                                transc.setCategory(transaction.getCategory());
 
-            if (transaction.getMerchant() != null)
-                transc.setMerchant(transaction.getMerchant());
+                            if (transaction.getMerchant() != null)
+                                transc.setMerchant(transaction.getMerchant());
 
-            transactionJpaRepository.save(transc);
-            return "created";
+                            transactionJpaRepository.save(transc);
+                            response.setStatus(HttpServletResponse.SC_CREATED);
+                        } else {
+                            response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+                        }
+                    } else {
+                        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    }
+                }
+            } else {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            }
+        } catch (Exception ex) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         }
-        return status;
     }
 
     @DeleteMapping(value = "/{id}")
     @ResponseBody
-    public String deleteTransaction(@PathVariable UUID id, HttpServletRequest request) {
-        String status = AuthFilter.authorizeUser(request, userJpaRespository);
-        if (status.equals("ok")) {
-            transactionJpaRepository.delete(id);
-            return "deleted";
-
+    public void deleteTransaction(@PathVariable UUID id, HttpServletRequest request, HttpServletResponse response) {
+        try {
+            String username = AuthFilter.authorizeUser(request, userJpaRespository);
+            if (username != null) {
+                if (id == null || id.toString().trim().length() == 0) {
+                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                } else {
+                    Transaction transc = transactionJpaRepository.findOne(id);
+                    if (transc != null) {
+                        if (transc.getUser().getUsername().equals(username)) {
+                            transactionJpaRepository.delete(id);
+                            response.setStatus(HttpServletResponse.SC_OK);
+                        } else {
+                            response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+                        }
+                    } else {
+                        response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+                    }
+                }
+            } else {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            }
+        } catch (Exception ex) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         }
-        return status;
     }
 }
