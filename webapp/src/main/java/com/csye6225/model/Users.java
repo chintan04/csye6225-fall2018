@@ -1,12 +1,11 @@
 package com.csye6225.model;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
+import java.util.List;
 
 @Entity
 public class Users {
+
     @Id
     private String username;
     private String pwd;
@@ -26,4 +25,7 @@ public class Users {
     public void setPwd(String pwd) {
         this.pwd = pwd;
     }
+
+    @OneToMany(mappedBy = "user")
+    private List<Transaction> transactionList;
 }
