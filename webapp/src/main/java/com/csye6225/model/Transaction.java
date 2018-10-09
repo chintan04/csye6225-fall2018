@@ -2,10 +2,7 @@ package com.csye6225.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
+import javax.persistence.*;
 import java.util.UUID;
 
 @Entity
@@ -20,6 +17,10 @@ public class Transaction {
     @ManyToOne
     @JoinColumn(name = "userId",nullable = false)
     private Users user;
+
+    @OneToOne
+    @JoinColumn(name ="attachment_id")
+    private Attachment attachment;
 
 
     public UUID getId() {
@@ -79,6 +80,13 @@ public class Transaction {
         this.user = user;
     }
 
+    public Attachment getAttachment() {
+        return attachment;
+    }
+
+    public void setAttachment(Attachment attachment) {
+        this.attachment = attachment;
+    }
 
     public Transaction(){}
 
