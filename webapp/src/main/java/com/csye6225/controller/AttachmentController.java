@@ -3,6 +3,8 @@ package com.csye6225.controller;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.CannedAccessControlList;
+import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.csye6225.filter.AuthFilter;
 import com.csye6225.model.Attachment;
 import com.csye6225.model.Transaction;
@@ -18,6 +20,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.awt.*;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.UUID;
@@ -35,7 +39,7 @@ public class AttachmentController {
     @Autowired
     private UserJpaRespository userJpaRespository;
 
-    private final String BUCKET_NAME ="csye6225-fall2018-shahc.me.csye6225.com";
+    private final String BUCKET_NAME ="csye6225-fall2018-nigama.me.csye6225.com";
 
     @GetMapping
     @ResponseBody
@@ -86,8 +90,9 @@ public class AttachmentController {
                 if (tid !=null || tid.toString().trim().length()!=0) {
                     Transaction transc = transactionJpaRepository.findOne(tid);
                     if(transc != null && transc.getUser().getUsername().equals(username)) {
-                        File file = new File(multipartFile.getOriginalFilename());
-                        multipartFile.transferTo(file);
+//                        File file = new File(multipartFile.getOriginalFilename());
+//                        multipartFile.transferTo(file);
+                        File file = convertMultiPartToFile(multipartFile);
                         System.out.println("Location = "+file.getPath());
                         AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
                                 .withRegion(Regions.US_EAST_1).build();
@@ -96,7 +101,8 @@ public class AttachmentController {
                             UUID key_uuid = UUID.randomUUID();
                             Attachment attachment = new Attachment();
                             attachment.setAttachment_id(key_uuid);
-                            s3Client.putObject(BUCKET_NAME,key_uuid.toString(),"/"+file);
+//                            s3Client.putObject(BUCKET_NAME,key_uuid.toString(),file);
+                            s3Client.putObject(new PutObjectRequest(BUCKET_NAME, key_uuid.toString(), file).withCannedAcl(CannedAccessControlList.PublicRead));
                             URL url = s3Client.getUrl(BUCKET_NAME, key_uuid.toString());
                             attachment.setUrl(url.toString());
                             attachmentjpaRepository.save(attachment);
@@ -179,6 +185,13 @@ public class AttachmentController {
 
         }
 
+    }
+    private File convertMultiPartToFile(MultipartFile file) throws IOException {
+        File convFile = new File("/home/anigam/Pictures/" +file.getOriginalFilename());
+        FileOutputStream fos = new FileOutputStream(convFile);
+        fos.write(file.getBytes());
+        fos.close();
+        return convFile;
     }
 
 }
