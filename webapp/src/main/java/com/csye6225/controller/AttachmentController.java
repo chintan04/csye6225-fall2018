@@ -4,6 +4,7 @@ import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
+import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.csye6225.filter.AuthFilter;
 import com.csye6225.model.Attachment;
@@ -90,10 +91,7 @@ public class AttachmentController {
                 if (tid !=null || tid.toString().trim().length()!=0) {
                     Transaction transc = transactionJpaRepository.findOne(tid);
                     if(transc != null && transc.getUser().getUsername().equals(username)) {
-//                        File file = new File(multipartFile.getOriginalFilename());
-//                        multipartFile.transferTo(file);
                         File file = convertMultiPartToFile(multipartFile);
-                        System.out.println("Location = "+file.getPath());
                         AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
                                 .withRegion(Regions.US_EAST_1).build();
                         System.out.println("Bucket = "+s3Client.listBuckets().get(0).getName());
@@ -101,7 +99,6 @@ public class AttachmentController {
                             UUID key_uuid = UUID.randomUUID();
                             Attachment attachment = new Attachment();
                             attachment.setAttachment_id(key_uuid);
-//                            s3Client.putObject(BUCKET_NAME,key_uuid.toString(),file);
                             s3Client.putObject(new PutObjectRequest(BUCKET_NAME, key_uuid.toString(), file).withCannedAcl(CannedAccessControlList.PublicRead));
                             URL url = s3Client.getUrl(BUCKET_NAME, key_uuid.toString());
                             attachment.setUrl(url.toString());
@@ -187,7 +184,7 @@ public class AttachmentController {
 
     }
     private File convertMultiPartToFile(MultipartFile file) throws IOException {
-        File convFile = new File("/home/anigam/Pictures/" +file.getOriginalFilename());
+        File convFile = new File(file.getOriginalFilename());
         FileOutputStream fos = new FileOutputStream(convFile);
         fos.write(file.getBytes());
         fos.close();
