@@ -1,9 +1,13 @@
 package com.csye6225.model;
 
+import javax.persistence.Entity;
+import javax.persistence.Id;
 import java.util.UUID;
 
+@Entity
 public class Attachment {
 
+    @Id
     private UUID attachment_id;
     private String url;
 
