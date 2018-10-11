@@ -80,6 +80,7 @@ public class AttachmentController {
     public void addAttachment(HttpServletRequest request, HttpServletResponse response, @PathVariable UUID tid, @RequestPart("file") MultipartFile multipartFile) {
         response.setContentType("application/json");
         String username = AuthFilter.authorizeUser(request, userJpaRespository);
+        System.out.println(multipartFile.getContentType());
         try {
             if (username != null) {
                 if (tid != null || tid.toString().trim().length() != 0) {
@@ -87,14 +88,20 @@ public class AttachmentController {
                     if (transc != null && transc.getUser().getUsername().equals(username)) {
 
                         if (transc.getAttachment() == null) {
-                            UUID key_uuid = UUID.randomUUID();
-                            Attachment attachment = new Attachment();
-                            attachment.setAttachment_id(key_uuid);
-                            String url = AwsS3Client.uploadImg(key_uuid, multipartFile);
-                            attachment.setUrl(url.toString());
-                            attachmentjpaRepository.save(attachment);
-                            transc.setAttachment(attachment);
-                            transactionJpaRepository.save(transc);
+                            String fileExtension = getFileExtension(multipartFile);
+                            if (fileExtension.equalsIgnoreCase("jpeg") || fileExtension.equalsIgnoreCase("jpg") || fileExtension.equalsIgnoreCase("png")) {
+                                UUID key_uuid = UUID.randomUUID();
+                                Attachment attachment = new Attachment();
+                                attachment.setAttachment_id(key_uuid);
+                                String url = AwsS3Client.uploadImg(key_uuid, multipartFile);
+                                attachment.setUrl(url.toString());
+                                attachmentjpaRepository.save(attachment);
+                                transc.setAttachment(attachment);
+                                transactionJpaRepository.save(transc);
+                            } else {
+                                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                                response.getWriter().write("File type not supported");
+                            }
 
                         } else {
                             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -179,11 +186,17 @@ public class AttachmentController {
                     if (tid != null || tid.toString().trim().length() != 0) {
                         Transaction transc = transactionJpaRepository.findOne(tid);
                         if (transc != null && transc.getUser().getUsername().equals(username)) {
-                            Attachment attachment = transc.getAttachment();
-                            String url = AwsS3Client.uploadImg(attachment.getAttachment_id(), multipartFile);
-                            attachment.setUrl(url.toString());
-                            transc.setAttachment(attachment);
-                            attachmentjpaRepository.save(attachment);
+                            String fileExtension = getFileExtension(multipartFile);
+                            if (fileExtension.equalsIgnoreCase("jpeg") || fileExtension.equalsIgnoreCase("jpg") || fileExtension.equalsIgnoreCase("png")) {
+                                Attachment attachment = transc.getAttachment();
+                                String url = AwsS3Client.uploadImg(attachment.getAttachment_id(), multipartFile);
+                                attachment.setUrl(url.toString());
+                                transc.setAttachment(attachment);
+                                attachmentjpaRepository.save(attachment);
+                            } else {
+                                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                                response.getWriter().write("File type not supported");
+                            }
                         } else {
                             response.setStatus(HttpServletResponse.SC_NO_CONTENT);
                             response.getWriter().write("No Content");
@@ -204,12 +217,21 @@ public class AttachmentController {
 
     }
 
-//    private File convertMultiPartToFile(MultipartFile file) throws IOException {
-//        File convFile = new File(file.getOriginalFilename());
-//        FileOutputStream fos = new FileOutputStream(convFile);
-//        fos.write(file.getBytes());
-//        fos.close();
-//        return convFile;
-//    }
+    private static String getFileExtension(MultipartFile file) {
+        String extension = "";
+
+        try {
+            if (file != null) {
+                String name = file.getOriginalFilename();
+                extension = name.substring(name.lastIndexOf(".") + 1);
+            }
+        } catch (Exception e) {
+            extension = "";
+        }
+
+        return extension;
+
+    }
+
 
 }
