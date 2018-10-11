@@ -117,8 +117,8 @@ public class AttachmentController {
                         }
                     }
                     else {
-                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                        response.getWriter().write("UnAuthorized");
+                        response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+                        response.getWriter().write("No Content");
                     }
 
                 }else {
@@ -157,7 +157,8 @@ public class AttachmentController {
                     Transaction transc = transactionJpaRepository.findOne(tid);
                     if (transc.getUser().getUsername().equals(username))
                     {
-                        if (transc.getAttachment().getAttachment_id() == aid) {
+                        if (transc.getAttachment().getAttachment_id().equals(aid)) {
+                            transc.setAttachment(null);
                             attachmentjpaRepository.delete(aid);
                             response.setStatus(HttpServletResponse.SC_OK);
                             response.getWriter().write("Deleted");
@@ -179,7 +180,7 @@ public class AttachmentController {
         }
         catch (Exception ex)
         {
-
+            System.out.println("Exception is"+ex.getMessage());
         }
 
     }
