@@ -6,6 +6,7 @@ import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
+import com.csye6225.aws.AwsS3Client;
 import com.csye6225.filter.AuthFilter;
 import com.csye6225.model.Attachment;
 import com.csye6225.model.Transaction;
@@ -40,7 +41,7 @@ public class AttachmentController {
     @Autowired
     private UserJpaRespository userJpaRespository;
 
-    private final String BUCKET_NAME ="csye6225-fall2018-nigama.me.csye6225.com";
+    private final String BUCKET_NAME = "csye6225-fall2018-nigama.me.csye6225.com";
 
     @GetMapping
     @ResponseBody
@@ -51,124 +52,105 @@ public class AttachmentController {
             if (username != null) {
                 if (tid == null || tid.toString().trim().length() == 0) {
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                }
-                else{
+                } else {
                     Transaction transc = transactionJpaRepository.findOne(tid);
-                    if (transc.getUser().getUsername().equals(username))
-                    {
+                    if (transc.getUser().getUsername().equals(username)) {
                         Attachment attachment = transc.getAttachment();
                         ObjectMapper mapper = new ObjectMapper();
                         String jsonString = mapper.writeValueAsString(attachment);
                         response.setStatus(HttpServletResponse.SC_OK);
                         response.getWriter().write(jsonString);
-                    }
-                    else {
+                    } else {
                         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                         response.getWriter().write("UnAuthorized");
                     }
 
                 }
-            }
-            else{
+            } else {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.getWriter().write("UnAuthorized");
             }
-        }
-        catch(Exception ex)
-        {
+        } catch (Exception ex) {
 
         }
     }
 
-    @PostMapping (consumes = { "multipart/form-data" })
+    @PostMapping(consumes = {"multipart/form-data"})
     @ResponseBody
-    public void addAttachment(HttpServletRequest request, HttpServletResponse response, @PathVariable UUID tid, @RequestPart("file") MultipartFile multipartFile)
-    {
+    public void addAttachment(HttpServletRequest request, HttpServletResponse response, @PathVariable UUID tid, @RequestPart("file") MultipartFile multipartFile) {
         response.setContentType("application/json");
         String username = AuthFilter.authorizeUser(request, userJpaRespository);
         try {
             if (username != null) {
-                if (tid !=null || tid.toString().trim().length()!=0) {
+                if (tid != null || tid.toString().trim().length() != 0) {
                     Transaction transc = transactionJpaRepository.findOne(tid);
-                    if(transc != null && transc.getUser().getUsername().equals(username)) {
-                        File file = convertMultiPartToFile(multipartFile);
-                        AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
-                                .withRegion(Regions.US_EAST_1).build();
-                        System.out.println("Bucket = "+s3Client.listBuckets().get(0).getName());
-                        if (transc.getAttachment()==null) {
+                    if (transc != null && transc.getUser().getUsername().equals(username)) {
+
+                        if (transc.getAttachment() == null) {
                             UUID key_uuid = UUID.randomUUID();
                             Attachment attachment = new Attachment();
                             attachment.setAttachment_id(key_uuid);
-                            s3Client.putObject(new PutObjectRequest(BUCKET_NAME, key_uuid.toString(), file).withCannedAcl(CannedAccessControlList.PublicRead));
-                            URL url = s3Client.getUrl(BUCKET_NAME, key_uuid.toString());
+                            String url = AwsS3Client.uploadImg(key_uuid, multipartFile);
                             attachment.setUrl(url.toString());
                             attachmentjpaRepository.save(attachment);
                             transc.setAttachment(attachment);
                             transactionJpaRepository.save(transc);
 
+                        } else {
+                            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                            response.getWriter().write("Attachment already exist, please UPDATE transaction");
                         }
-                        else {
-                            Attachment attachment = transc.getAttachment();
-                            s3Client.putObject(BUCKET_NAME,attachment.getAttachment_id().toString(),file);
-                            URL url = s3Client.getUrl(BUCKET_NAME, attachment.getAttachment_id().toString());
-                            attachment.setUrl(url.toString());
-                            transc.setAttachment(attachment);
-                            attachmentjpaRepository.save(attachment);
-                        }
-                    }
-                    else {
+                    } else {
                         response.setStatus(HttpServletResponse.SC_NO_CONTENT);
                         response.getWriter().write("No Content");
                     }
 
-                }else {
+                } else {
                     response.setStatus(HttpServletResponse.SC_NO_CONTENT);
                     response.getWriter().write("No Content");
                 }
 
-            }else {
+            } else {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.getWriter().write("UnAuthorized");
             }
 
-        }
-        catch (Exception ex)
-        {
-            System.out.println("Exception"+ex.getMessage());
+        } catch (Exception ex) {
+            System.out.println("Exception" + ex.getMessage());
 
         }
 
     }
 
-    @DeleteMapping(value ="/{aid}")
+    @DeleteMapping(value = "/{aid}")
     @ResponseBody
-    public void deleteAttachemnt(HttpServletRequest request, HttpServletResponse response, @PathVariable UUID tid, @PathVariable UUID aid)
-    {
+    public void deleteAttachemnt(HttpServletRequest request, HttpServletResponse response, @PathVariable UUID tid, @PathVariable UUID aid) {
         response.setContentType("application/json");
         String username = AuthFilter.authorizeUser(request, userJpaRespository);
         try {
             if (username != null) {
-                if (tid == null || tid.toString().trim().length() == 0 || aid==null || aid.toString().trim().length()==0)
-                {
+                if (tid == null || tid.toString().trim().length() == 0 || aid == null || aid.toString().trim().length() == 0) {
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                     response.getWriter().write("BAD REQUEST");
-                }
-                else {
+                } else {
                     Transaction transc = transactionJpaRepository.findOne(tid);
-                    if (transc.getUser().getUsername().equals(username))
-                    {
-                        if (transc.getAttachment().getAttachment_id().equals(aid)) {
-                            transc.setAttachment(null);
-                            attachmentjpaRepository.delete(aid);
-                            response.setStatus(HttpServletResponse.SC_OK);
-                            response.getWriter().write("Deleted");
-                        }
-                        else{
+                    if (transc.getUser().getUsername().equals(username)) {
+                        if (transc.getAttachment() != null) {
+                            if (transc.getAttachment().getAttachment_id().equals(aid)) {
+                                transc.setAttachment(null);
+                                attachmentjpaRepository.delete(aid);
+                                AwsS3Client.deleteImg(aid);
+                                response.setStatus(HttpServletResponse.SC_OK);
+                                response.getWriter().write("Delete successful");
+                            } else {
+                                response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+                                response.getWriter().write("No Content");
+                            }
+                        } else {
                             response.setStatus(HttpServletResponse.SC_NO_CONTENT);
                             response.getWriter().write("No Content");
                         }
-                    }
-                    else {
+                    } else {
                         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                         response.getWriter().write("UnAuthorized");
                     }
@@ -176,20 +158,58 @@ public class AttachmentController {
             } else {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 response.getWriter().write("UnAuthorized");
-                }
-        }
-        catch (Exception ex)
-        {
-            System.out.println("Exception is"+ex.getMessage());
+            }
+        } catch (Exception ex) {
+            System.out.println("Exception is" + ex.getMessage());
         }
 
     }
-    private File convertMultiPartToFile(MultipartFile file) throws IOException {
-        File convFile = new File(file.getOriginalFilename());
-        FileOutputStream fos = new FileOutputStream(convFile);
-        fos.write(file.getBytes());
-        fos.close();
-        return convFile;
+
+    @PutMapping(value = "/{aid}")
+    @ResponseBody
+    public void updateAttachment(HttpServletRequest request, HttpServletResponse response, @PathVariable UUID tid, @PathVariable UUID aid, @RequestPart("file") MultipartFile multipartFile) {
+        response.setContentType("application/json");
+        String username = AuthFilter.authorizeUser(request, userJpaRespository);
+        try {
+            if (username != null) {
+                if (tid == null || tid.toString().trim().length() == 0 || aid == null || aid.toString().trim().length() == 0) {
+                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    response.getWriter().write("BAD REQUEST");
+                } else {
+                    if (tid != null || tid.toString().trim().length() != 0) {
+                        Transaction transc = transactionJpaRepository.findOne(tid);
+                        if (transc != null && transc.getUser().getUsername().equals(username)) {
+                            Attachment attachment = transc.getAttachment();
+                            String url = AwsS3Client.uploadImg(attachment.getAttachment_id(), multipartFile);
+                            attachment.setUrl(url.toString());
+                            transc.setAttachment(attachment);
+                            attachmentjpaRepository.save(attachment);
+                        } else {
+                            response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+                            response.getWriter().write("No Content");
+                        }
+
+                    } else {
+                        response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+                        response.getWriter().write("No Content");
+                    }
+                }
+            } else {
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write("UnAuthorized");
+            }
+        } catch (Exception ex) {
+            System.out.println("Exception is" + ex.getMessage());
+        }
+
     }
+
+//    private File convertMultiPartToFile(MultipartFile file) throws IOException {
+//        File convFile = new File(file.getOriginalFilename());
+//        FileOutputStream fos = new FileOutputStream(convFile);
+//        fos.write(file.getBytes());
+//        fos.close();
+//        return convFile;
+//    }
 
 }
