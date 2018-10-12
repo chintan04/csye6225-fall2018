@@ -17,23 +17,23 @@ public class AwsS3Client {
     static AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
             .withRegion(Regions.US_EAST_1).build();
 
-    private static final String BUCKET_NAME ="csye6225-fall2018-nigama.me.csye6225.com";
 
-    public static String uploadImg(UUID key_uuid, MultipartFile multipartFile)
+    public static String uploadImg(String BUCKET_NAME, UUID key_uuid, File file)
     {
         try {
-            File file= convertMultiPartToFile(multipartFile);
-            s3Client.putObject(new PutObjectRequest(BUCKET_NAME, key_uuid.toString(), file).withCannedAcl(CannedAccessControlList.PublicRead));
-            URL url = s3Client.getUrl(BUCKET_NAME, key_uuid.toString());
-            return url.toString();
-        }
+
+                s3Client.putObject(new PutObjectRequest(BUCKET_NAME, key_uuid.toString(), file).withCannedAcl(CannedAccessControlList.PublicRead));
+                URL url = s3Client.getUrl(BUCKET_NAME, key_uuid.toString());
+                file.delete();
+                return url.toString();
+            }
         catch (Exception ex) {
             System.out.println("Error in AwsS3Client upload method = " + ex.getMessage());
             return null;
         }
     }
 
-    public static void deleteImg(UUID key_uuid) {
+    public static void deleteImg(String BUCKET_NAME,UUID key_uuid) {
         try {
             s3Client.deleteObject(BUCKET_NAME, key_uuid.toString());
         }
@@ -41,8 +41,8 @@ public class AwsS3Client {
             System.out.println("Error in AwsS3Client delete method= " +ex.getMessage());
         }
     }
-    private static File convertMultiPartToFile(MultipartFile file) throws IOException {
-        File convFile = new File(file.getOriginalFilename());
+    public static File convertMultiPartToFile(MultipartFile file) throws IOException {
+        File convFile = new File("images/"+file.getOriginalFilename());
         FileOutputStream fos = new FileOutputStream(convFile);
         fos.write(file.getBytes());
         fos.close();

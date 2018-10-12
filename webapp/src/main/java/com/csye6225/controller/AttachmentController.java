@@ -15,6 +15,8 @@ import com.csye6225.repository.TransactionJpaRepository;
 import com.csye6225.repository.UserJpaRespository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import org.springframework.core.env.Environment;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -41,7 +43,12 @@ public class AttachmentController {
     @Autowired
     private UserJpaRespository userJpaRespository;
 
-    private final String BUCKET_NAME = "csye6225-fall2018-nigama.me.csye6225.com";
+    @Autowired
+    private Environment env;
+
+
+
+    private String status = null;
 
     @GetMapping
     @ResponseBody
@@ -62,13 +69,15 @@ public class AttachmentController {
                         response.getWriter().write(jsonString);
                     } else {
                         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                        response.getWriter().write("UnAuthorized");
+                        status = "UnAuthorized";
+                        response.getWriter().write(status);
                     }
 
                 }
             } else {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("UnAuthorized");
+                status = "UnAuthorized";
+                response.getWriter().write(status);
             }
         } catch (Exception ex) {
 
@@ -82,6 +91,8 @@ public class AttachmentController {
         String username = AuthFilter.authorizeUser(request, userJpaRespository);
         System.out.println(multipartFile.getContentType());
         try {
+            String url = null;
+            String BUCKET_NAME =env.getProperty("bucketName");
             if (username != null) {
                 if (tid != null || tid.toString().trim().length() != 0) {
                     Transaction transc = transactionJpaRepository.findOne(tid);
@@ -93,33 +104,54 @@ public class AttachmentController {
                                 UUID key_uuid = UUID.randomUUID();
                                 Attachment attachment = new Attachment();
                                 attachment.setAttachment_id(key_uuid);
-                                String url = AwsS3Client.uploadImg(key_uuid, multipartFile);
+                                File file =  AwsS3Client.convertMultiPartToFile(multipartFile);
+                                if (env.getProperty("profile").equals("dev")) {
+                                     url = AwsS3Client.uploadImg(BUCKET_NAME,key_uuid, file);
+                                }
+                                else
+                                {
+                                    url = file.getAbsolutePath();
+                                }
+                                if (url != null){
                                 attachment.setUrl(url.toString());
                                 attachmentjpaRepository.save(attachment);
                                 transc.setAttachment(attachment);
                                 transactionJpaRepository.save(transc);
+                                }
+                                else {
+                                    response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                                    status = "Issue with AWS CLient";
+                                    response.getWriter().write(status);
+
+                                }
+
                             } else {
                                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                                response.getWriter().write("File type not supported");
+                                status = "File type not supported";
+                                response.getWriter().write(status);
                             }
 
                         } else {
                             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                            response.getWriter().write("Attachment already exist, please UPDATE transaction");
+                            status = "Attachment already exist, please UPDATE transaction";
+                            response.getWriter().write(status);
                         }
                     } else {
                         response.setStatus(HttpServletResponse.SC_NO_CONTENT);
-                        response.getWriter().write("No Content");
+                        status = "No Content";
+                        response.getWriter().write(status);
                     }
 
                 } else {
                     response.setStatus(HttpServletResponse.SC_NO_CONTENT);
-                    response.getWriter().write("No Content");
+                    status = "No Content";
+                    response.getWriter().write(status);
                 }
 
             } else {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("UnAuthorized");
+                status = "UnAuthorized";
+                response.getWriter().write(status);
             }
 
         } catch (Exception ex) {
@@ -135,10 +167,12 @@ public class AttachmentController {
         response.setContentType("application/json");
         String username = AuthFilter.authorizeUser(request, userJpaRespository);
         try {
+            String BUCKET_NAME =env.getProperty("bucketName");
             if (username != null) {
                 if (tid == null || tid.toString().trim().length() == 0 || aid == null || aid.toString().trim().length() == 0) {
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    response.getWriter().write("BAD REQUEST");
+                    status = "Bad Request";
+                    response.getWriter().write(status);
                 } else {
                     Transaction transc = transactionJpaRepository.findOne(tid);
                     if (transc.getUser().getUsername().equals(username)) {
@@ -146,25 +180,36 @@ public class AttachmentController {
                             if (transc.getAttachment().getAttachment_id().equals(aid)) {
                                 transc.setAttachment(null);
                                 attachmentjpaRepository.delete(aid);
-                                AwsS3Client.deleteImg(aid);
+                                if (env.getProperty("profile").equals("dev")) {
+                                    AwsS3Client.deleteImg(BUCKET_NAME, aid);
+                                }
+                                else {
+                                    File file = new File(transc.getAttachment().getUrl());
+                                    file.delete();
+                                }
                                 response.setStatus(HttpServletResponse.SC_OK);
-                                response.getWriter().write("Delete successful");
+                                status = "Deleted";
+                                response.getWriter().write(status);
                             } else {
                                 response.setStatus(HttpServletResponse.SC_NO_CONTENT);
-                                response.getWriter().write("No Content");
+                                status = "No Content";
+                                response.getWriter().write(status);
                             }
                         } else {
                             response.setStatus(HttpServletResponse.SC_NO_CONTENT);
-                            response.getWriter().write("No Content");
+                            status = "No Content";
+                            response.getWriter().write(status);
                         }
                     } else {
                         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                        response.getWriter().write("UnAuthorized");
+                        status = "UnAuthorized";
+                        response.getWriter().write(status);
                     }
                 }
             } else {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("UnAuthorized");
+                status = "UnAuthorized";
+                response.getWriter().write(status);
             }
         } catch (Exception ex) {
             System.out.println("Exception is" + ex.getMessage());
@@ -178,10 +223,13 @@ public class AttachmentController {
         response.setContentType("application/json");
         String username = AuthFilter.authorizeUser(request, userJpaRespository);
         try {
+            String BUCKET_NAME =env.getProperty("bucketName");
+            String url = null;
             if (username != null) {
                 if (tid == null || tid.toString().trim().length() == 0 || aid == null || aid.toString().trim().length() == 0) {
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    response.getWriter().write("BAD REQUEST");
+                    status = "Bad Request";
+                    response.getWriter().write(status);
                 } else {
                     if (tid != null || tid.toString().trim().length() != 0) {
                         Transaction transc = transactionJpaRepository.findOne(tid);
@@ -189,27 +237,44 @@ public class AttachmentController {
                             String fileExtension = getFileExtension(multipartFile);
                             if (fileExtension.equalsIgnoreCase("jpeg") || fileExtension.equalsIgnoreCase("jpg") || fileExtension.equalsIgnoreCase("png")) {
                                 Attachment attachment = transc.getAttachment();
-                                String url = AwsS3Client.uploadImg(attachment.getAttachment_id(), multipartFile);
-                                attachment.setUrl(url.toString());
-                                transc.setAttachment(attachment);
-                                attachmentjpaRepository.save(attachment);
+                                File file =  AwsS3Client.convertMultiPartToFile(multipartFile);
+                                if(env.getProperty("profile").equals("dev")) {
+                                     url = AwsS3Client.uploadImg(BUCKET_NAME,attachment.getAttachment_id(), file);
+                                }
+                                else {
+                                    url = file.getPath();
+                                }
+                                if(url != null) {
+                                    attachment.setUrl(url.toString());
+                                    transc.setAttachment(attachment);
+                                    attachmentjpaRepository.save(attachment);
+                                }
+                                else{
+                                        response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                                        status = "Issue with AWS CLient";
+                                        response.getWriter().write(status);
+                                }
                             } else {
                                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                                response.getWriter().write("File type not supported");
+                                status = "File type not supported";
+                                response.getWriter().write(status);
                             }
                         } else {
                             response.setStatus(HttpServletResponse.SC_NO_CONTENT);
-                            response.getWriter().write("No Content");
+                            status = "No Content";
+                            response.getWriter().write(status);
                         }
 
                     } else {
                         response.setStatus(HttpServletResponse.SC_NO_CONTENT);
-                        response.getWriter().write("No Content");
+                        status = "No Content";
+                        response.getWriter().write(status);
                     }
                 }
             } else {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("UnAuthorized");
+                status = "UnAuthorized";
+                response.getWriter().write(status);
             }
         } catch (Exception ex) {
             System.out.println("Exception is" + ex.getMessage());
