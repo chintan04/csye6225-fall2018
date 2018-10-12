@@ -89,7 +89,7 @@ public class TransactionController {
                     }
                     transactionJpaRepository.save(transaction);
                     response.setStatus(HttpServletResponse.SC_CREATED);
-                    this.response = Response.jsonString("Created");
+                    this.response = Response.jsonString("Transaction Created");
                     response.getWriter().write(this.response);
                 }
             } else {

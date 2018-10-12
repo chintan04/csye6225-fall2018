@@ -44,6 +44,7 @@ public class UsersController {
             String pw_hash = BCrypt.hashpw(user.getPwd(), BCrypt.gensalt());
             user.setPwd(pw_hash);
             userJpaRespository.save(user);
+            response.setStatus(HttpServletResponse.SC_CREATED);
             this.response = Response.jsonString("User created");
             response.getWriter().write(this.response);
         }
