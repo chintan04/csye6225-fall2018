@@ -178,13 +178,15 @@ public class AttachmentController {
                     if (transc.getUser().getUsername().equals(username)) {
                         if (transc.getAttachment() != null) {
                             if (transc.getAttachment().getAttachment_id().equals(aid)) {
+                                String url = transc.getAttachment().getUrl();
                                 transc.setAttachment(null);
                                 attachmentjpaRepository.delete(aid);
                                 if (env.getProperty("profile").equals("dev")) {
                                     AwsS3Client.deleteImg(BUCKET_NAME, aid);
                                 }
                                 else {
-                                    File file = new File(transc.getAttachment().getUrl());
+                                    url.replace("/","//");
+                                    File file = new File(url);
                                     file.delete();
                                 }
                                 response.setStatus(HttpServletResponse.SC_OK);
