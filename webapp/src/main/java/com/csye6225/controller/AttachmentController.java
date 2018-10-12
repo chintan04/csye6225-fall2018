@@ -1,14 +1,9 @@
 package com.csye6225.controller;
 
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.model.CannedAccessControlList;
-import com.amazonaws.services.s3.model.ObjectMetadata;
-import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.csye6225.aws.AwsS3Client;
 import com.csye6225.filter.AuthFilter;
 import com.csye6225.model.Attachment;
+import com.csye6225.model.Response;
 import com.csye6225.model.Transaction;
 import com.csye6225.repository.AttachmentjpaRepository;
 import com.csye6225.repository.TransactionJpaRepository;
@@ -22,12 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.awt.*;
 import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
 import java.util.UUID;
 
 @RestController
@@ -48,7 +38,7 @@ public class AttachmentController {
 
 
 
-    private String status = null;
+    private String response = null;
 
     @GetMapping
     @ResponseBody
@@ -69,15 +59,15 @@ public class AttachmentController {
                         response.getWriter().write(jsonString);
                     } else {
                         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                        status = "UnAuthorized";
-                        response.getWriter().write(status);
+                        this.response = Response.jsonString("UnAuthorized");
+                        response.getWriter().write(this.response);
                     }
 
                 }
             } else {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                status = "UnAuthorized";
-                response.getWriter().write(status);
+                this.response = Response.jsonString("UnAuthorized");
+                response.getWriter().write(this.response);
             }
         } catch (Exception ex) {
 
@@ -113,45 +103,48 @@ public class AttachmentController {
                                     url = file.getAbsolutePath();
                                 }
                                 if (url != null){
-                                attachment.setUrl(url.toString());
+                                attachment.setUrl(url);
                                 attachmentjpaRepository.save(attachment);
                                 transc.setAttachment(attachment);
                                 transactionJpaRepository.save(transc);
+                                    response.setStatus(HttpServletResponse.SC_OK);
+                                    this.response = Response.jsonString("Attachment uploaded");
+                                    response.getWriter().write(this.response);
                                 }
                                 else {
                                     response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                                    status = "Issue with AWS CLient";
-                                    response.getWriter().write(status);
+                                    this.response = Response.jsonString("Issue with AWS CLient");
+                                    response.getWriter().write(this.response);
 
                                 }
 
                             } else {
                                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                                status = "File type not supported";
-                                response.getWriter().write(status);
+                                this.response = Response.jsonString("File type not supported");
+                                response.getWriter().write(this.response);
                             }
 
                         } else {
                             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                            status = "Attachment already exist, please UPDATE transaction";
-                            response.getWriter().write(status);
+                            this.response = Response.jsonString("Attachment already exist, please UPDATE transaction");
+                            response.getWriter().write(this.response);
                         }
                     } else {
                         response.setStatus(HttpServletResponse.SC_NO_CONTENT);
-                        status = "No Content";
-                        response.getWriter().write(status);
+                        this.response = Response.jsonString("No Content");
+                        response.getWriter().write(this.response);
                     }
 
                 } else {
                     response.setStatus(HttpServletResponse.SC_NO_CONTENT);
-                    status = "No Content";
-                    response.getWriter().write(status);
+                    this.response = Response.jsonString("No Content");
+                    response.getWriter().write(this.response);
                 }
 
             } else {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                status = "UnAuthorized";
-                response.getWriter().write(status);
+                this.response = Response.jsonString("UnAuthorized");
+                response.getWriter().write(this.response);
             }
 
         } catch (Exception ex) {
@@ -171,8 +164,8 @@ public class AttachmentController {
             if (username != null) {
                 if (tid == null || tid.toString().trim().length() == 0 || aid == null || aid.toString().trim().length() == 0) {
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    status = "Bad Request";
-                    response.getWriter().write(status);
+                    this.response = Response.jsonString("Bad Request");
+                    response.getWriter().write(this.response);
                 } else {
                     Transaction transc = transactionJpaRepository.findOne(tid);
                     if (transc.getUser().getUsername().equals(username)) {
@@ -190,28 +183,28 @@ public class AttachmentController {
                                     file.delete();
                                 }
                                 response.setStatus(HttpServletResponse.SC_OK);
-                                status = "Deleted";
-                                response.getWriter().write(status);
+                                this.response = Response.jsonString("Attachment Deleted");
+                                response.getWriter().write(this.response);
                             } else {
                                 response.setStatus(HttpServletResponse.SC_NO_CONTENT);
-                                status = "No Content";
-                                response.getWriter().write(status);
+                                this.response = Response.jsonString("No Content");
+                                response.getWriter().write(this.response);
                             }
                         } else {
                             response.setStatus(HttpServletResponse.SC_NO_CONTENT);
-                            status = "No Content";
-                            response.getWriter().write(status);
+                            this.response = Response.jsonString("No Content");
+                            response.getWriter().write(this.response);
                         }
                     } else {
                         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                        status = "UnAuthorized";
-                        response.getWriter().write(status);
+                        this.response = Response.jsonString("UnAuthorized");
+                        response.getWriter().write(this.response);
                     }
                 }
             } else {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                status = "UnAuthorized";
-                response.getWriter().write(status);
+                this.response = Response.jsonString("UnAuthorized");
+                response.getWriter().write(this.response);
             }
         } catch (Exception ex) {
             System.out.println("Exception is" + ex.getMessage());
@@ -226,12 +219,12 @@ public class AttachmentController {
         String username = AuthFilter.authorizeUser(request, userJpaRespository);
         try {
             String BUCKET_NAME =env.getProperty("bucketName");
-            String url = null;
+            String url;
             if (username != null) {
                 if (tid == null || tid.toString().trim().length() == 0 || aid == null || aid.toString().trim().length() == 0) {
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                    status = "Bad Request";
-                    response.getWriter().write(status);
+                    this.response = Response.jsonString("Bad Request");
+                    response.getWriter().write(this.response);
                 } else {
                     if (tid != null || tid.toString().trim().length() != 0) {
                         Transaction transc = transactionJpaRepository.findOne(tid);
@@ -250,33 +243,36 @@ public class AttachmentController {
                                     attachment.setUrl(url.toString());
                                     transc.setAttachment(attachment);
                                     attachmentjpaRepository.save(attachment);
+                                    response.setStatus(HttpServletResponse.SC_OK);
+                                    this.response = Response.jsonString("Attachment updated");
+                                    response.getWriter().write(this.response);
                                 }
                                 else{
                                         response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                                        status = "Issue with AWS CLient";
-                                        response.getWriter().write(status);
+                                        this.response = Response.jsonString("Issue with AWS CLient");
+                                        response.getWriter().write(this.response);
                                 }
                             } else {
                                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                                status = "File type not supported";
-                                response.getWriter().write(status);
+                                this.response = Response.jsonString("File type not supported");
+                                response.getWriter().write(this.response);
                             }
                         } else {
                             response.setStatus(HttpServletResponse.SC_NO_CONTENT);
-                            status = "No Content";
-                            response.getWriter().write(status);
+                            this.response = Response.jsonString("No Content");
+                            response.getWriter().write(this.response);
                         }
 
                     } else {
                         response.setStatus(HttpServletResponse.SC_NO_CONTENT);
-                        status = "No Content";
-                        response.getWriter().write(status);
+                        this.response = Response.jsonString("No Content");
+                        response.getWriter().write(this.response);
                     }
                 }
             } else {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                status = "UnAuthorized";
-                response.getWriter().write(status);
+                this.response = Response.jsonString("UnAuthorized");
+                response.getWriter().write(this.response);
             }
         } catch (Exception ex) {
             System.out.println("Exception is" + ex.getMessage());
