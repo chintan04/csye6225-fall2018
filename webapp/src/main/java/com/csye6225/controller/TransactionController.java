@@ -1,6 +1,7 @@
 package com.csye6225.controller;
 
 import com.csye6225.filter.AuthFilter;
+import com.csye6225.model.Response;
 import com.csye6225.model.Transaction;
 import com.csye6225.model.Users;
 import com.csye6225.repository.TransactionJpaRepository;
@@ -31,10 +32,14 @@ public class TransactionController {
     @Autowired
     private UserJpaRespository userJpaRespository;
 
+    private String response = null;
+
+
     @GetMapping
     @ResponseBody
     public void getTransaction(HttpServletRequest request, HttpServletResponse response) {
         try {
+            response.setContentType("application/json");
             String username = AuthFilter.authorizeUser(request, userJpaRespository);
             List<Transaction> transactionListtemp = new ArrayList<Transaction>(transactionJpaRepository.findAll());
             List<Transaction> transactionListfinal = new ArrayList<>();
@@ -47,13 +52,15 @@ public class TransactionController {
                 ObjectMapper mapper = new ObjectMapper();
                 String jsonString = mapper.writeValueAsString(transactionListfinal);
                 response.setStatus(HttpServletResponse.SC_OK);
-                response.setContentType("application/json");
                 response.getWriter().write(jsonString);
             } else {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                this.response = Response.jsonString("UnAuthorized");
+                response.getWriter().write(this.response);
             }
         } catch (Exception ex) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+
         }
     }
 
@@ -61,12 +68,15 @@ public class TransactionController {
     @ResponseBody
     public void createTransaction(@RequestBody Transaction transaction, HttpServletRequest request, HttpServletResponse response) {
         try {
+            response.setContentType("application/json");
             String username = AuthFilter.authorizeUser(request, userJpaRespository);
             List<Users> userlist = userJpaRespository.findAll();
             if (username != null) {
                 if (transaction.getAmount().equals("") || transaction.getCategory().equals("") ||
                         transaction.getDescription().equals("") || transaction.getMerchant().equals("")) {
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    this.response = Response.jsonString("Bad Request");
+                    response.getWriter().write(this.response);
                 } else {
                     UUID u1 = UUID.randomUUID();
                     transaction.setId(u1);
@@ -79,12 +89,17 @@ public class TransactionController {
                     }
                     transactionJpaRepository.save(transaction);
                     response.setStatus(HttpServletResponse.SC_CREATED);
+                    this.response = Response.jsonString("Transaction Created");
+                    response.getWriter().write(this.response);
                 }
             } else {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                this.response = Response.jsonString("UnAuthorized");
+                response.getWriter().write(this.response);
             }
         } catch (Exception ex) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+
         }
     }
 
@@ -92,10 +107,13 @@ public class TransactionController {
     @ResponseBody
     public void updateTransaction(@RequestBody Transaction transaction, HttpServletRequest request, @PathVariable UUID id, HttpServletResponse response) {
         try {
+            response.setContentType("application/json");
             String username = AuthFilter.authorizeUser(request, userJpaRespository);
             if (username != null) {
                 if (id == null || id.toString().trim().length() == 0) {
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    this.response = Response.jsonString("Bad Request");
+                    response.getWriter().write(this.response);
                 } else {
                     Transaction transc = transactionJpaRepository.findOne(id);
                     if (transc != null) {
@@ -114,18 +132,27 @@ public class TransactionController {
 
                             transactionJpaRepository.save(transc);
                             response.setStatus(HttpServletResponse.SC_CREATED);
+                            this.response = Response.jsonString("Updated");
+                            response.getWriter().write(this.response);
                         } else {
                             response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+                            this.response = Response.jsonString("No Content");
+                            response.getWriter().write(this.response);
                         }
                     } else {
                         response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                        this.response = Response.jsonString("Bad Request");
+                        response.getWriter().write(this.response);
                     }
                 }
             } else {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                this.response = Response.jsonString("UnAuthorized");
+                response.getWriter().write(this.response);
             }
         } catch (Exception ex) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+
         }
     }
 
@@ -133,28 +160,40 @@ public class TransactionController {
     @ResponseBody
     public void deleteTransaction(@PathVariable UUID id, HttpServletRequest request, HttpServletResponse response) {
         try {
+            response.setContentType("application/json");
             String username = AuthFilter.authorizeUser(request, userJpaRespository);
             if (username != null) {
                 if (id == null || id.toString().trim().length() == 0) {
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    this.response = Response.jsonString("Bad Request");
+                    response.getWriter().write(this.response);
                 } else {
                     Transaction transc = transactionJpaRepository.findOne(id);
                     if (transc != null) {
                         if (transc.getUser().getUsername().equals(username)) {
                             transactionJpaRepository.delete(id);
                             response.setStatus(HttpServletResponse.SC_OK);
+                            this.response = Response.jsonString("Deleted");
+                            response.getWriter().write(this.response);
                         } else {
                             response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+                            this.response = Response.jsonString("No Content");
+                            response.getWriter().write(this.response);
                         }
                     } else {
                         response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+                        this.response = Response.jsonString("No Content");
+                        response.getWriter().write(this.response);
                     }
                 }
             } else {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                this.response = Response.jsonString("UnAuthorized");
+                response.getWriter().write(this.response);
             }
         } catch (Exception ex) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+
         }
     }
 }
