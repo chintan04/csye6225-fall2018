@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class Runner {
 
 	public static void main(String[] args) {
+		System.getProperties().put("spring.profiles.active","dev");
 		SpringApplication.run(Runner.class, args);
 	}
 }
