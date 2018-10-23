@@ -10,7 +10,7 @@ install: true
 script:
   - pwd
   - cd webapp
-  - mvn clean install
+  - mvn clean install -Dmaven.test.skip=true
   - cd target
   - ls -al
   - cd ../../..
