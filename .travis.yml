@@ -56,4 +56,4 @@ deploy:
     secret_access_key: $secret_access_key
     wait-until-deployed: true
      on:
-       branch: master
+       branch: assignment5
