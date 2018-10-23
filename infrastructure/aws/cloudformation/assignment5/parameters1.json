@@ -1,0 +1,30 @@
+[
+                {
+                    "ParameterValue": "10.0.5.0/24", 
+                    "ParameterKey": "subnet5"
+                }, 
+                {
+                    "ParameterValue": "10.0.6.0/24", 
+                    "ParameterKey": "subnet6"
+                }, 
+                {
+                    "ParameterValue": "10.0.0.0/16", 
+                    "ParameterKey": "VPCCIDR"
+                }, 
+                {
+                    "ParameterValue": "10.0.1.0/24", 
+                    "ParameterKey": "subnet1"
+                }, 
+                {
+                    "ParameterValue": "10.0.2.0/24", 
+                    "ParameterKey": "subnet2"
+                }, 
+                {
+                    "ParameterValue": "10.0.3.0/24", 
+                    "ParameterKey": "subnet3"
+                }, 
+                {
+                    "ParameterValue": "10.0.4.0/24", 
+                    "ParameterKey": "subnet4"
+                }
+            ]
