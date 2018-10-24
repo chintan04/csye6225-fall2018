@@ -1,6 +1,6 @@
 [
-                {
-                    "ParameterValue": "code-deploy.csye6225-fall2018-gaikawads.me", 
-                    "ParameterKey": "domain"
-                }
-            ]
+    {
+        "ParameterValue": "code-deploy.csye6225-fall2018-gaikawads.me",
+        "ParameterKey": "domain"
+    }
+]
