@@ -71,7 +71,7 @@
 	</dependencies>
 
 	<build>
-		<finalName>web</finalName>
+		<finalName>ROOT</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
