@@ -94,6 +94,8 @@ public class AttachmentController {
                                 Attachment attachment = new Attachment();
                                 attachment.setAttachment_id(key_uuid);
                                 File file = AwsS3Client.convertMultiPartToFile(multipartFile);
+                                System.out.println("ENV - "+env.getProperty("profile"));
+                                
                                 if (env.getProperty("profile").equals("dev")) {
                                     url = AwsS3Client.uploadImg(BUCKET_NAME, key_uuid, file);
                                 } else {
@@ -144,6 +146,7 @@ public class AttachmentController {
             }
 
         } catch (Exception ex) {
+            System.out.println("ENV - "+env.getProperty("profile"));
             System.out.println("Exception" + ex.getMessage());
 
         }
