@@ -44,6 +44,12 @@
             "FromPort": "443",
             "ToPort": "443",
             "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "8080",
+            "ToPort": "8080",
+            "CidrIp": "0.0.0.0/0"
           }
         ]
       }
@@ -215,14 +221,14 @@
                   "Fn::Join": [
                     "",
                     [
-                      "echo 'Environment=\"JAVA_OPTS=-Djava.awt.headless=true -Dspring.profiles.active=dev -Dspring.datasource.username=csye6225master -Dspring.datasource.password=csye6225password -Dspring.datasource.url=jdbc:postgresql://",
+                      "echo 'Environment=\"JAVA_OPTS=-Djava.awt.headless=true -Dspring.profiles.active=dev -Djava.security.egd=file:/dev/./urandom -Dspring.datasource.username=csye6225master -Dspring.datasource.password=csye6225password -Dspring.datasource.url=jdbc:postgresql://",
                       {
                         "Fn::GetAtt": [
                           "myRDSInstance",
                           "Endpoint.Address"
                         ]
                       },
-                      ":5432/csye6225-fall2018' >> tomcat.service"
+                      ":5432/csye6225' >> tomcat.service"
                     ]
                   ]
                 },

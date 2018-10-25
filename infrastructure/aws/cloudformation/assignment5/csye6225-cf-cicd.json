@@ -5,6 +5,10 @@
 		"domain": {
 			"Type": "String",
 			"Description": "Your domain name"
+		},
+		"s3bucket":{
+			"Type": "String",
+			"Description":"S3 Attachment bucket"
 		}
 	},
 	"Resources": {
@@ -80,6 +84,7 @@
 				}
 			}
 		},
+
 		"myCodeDeployEC2S3Policy": {
 			"Type": "AWS::IAM::ManagedPolicy",
 			"Properties": {
@@ -101,6 +106,41 @@
 										"arn:aws:s3:::",
 										{
 											"Ref": "domain"
+										}
+									]
+								]
+							}
+						}
+					]
+				},
+				"Roles": [
+					"CodeDeployEC2ServiceRole"
+				]
+			}
+		},
+		"myEC2S3AccessPolicy": {
+			"Type": "AWS::IAM::ManagedPolicy",
+			"Properties": {
+				"Description": "Put data in S3 buckets",
+				"ManagedPolicyName": "EC2-S3-Access",
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Action": [
+								"s3:Get*",
+								"s3:List*",
+								"s3:Put*",
+								"s3:Delete*"
+							],
+							"Effect": "Allow",
+							"Resource": {
+								"Fn::Join": [
+									":",
+									[
+										"arn:aws:s3:::",
+										{
+											"Ref": "s3bucket"
 										}
 									]
 								]
