@@ -228,7 +228,7 @@
                           "Endpoint.Address"
                         ]
                       },
-                      ":5432/csye6225\" >> tomcat.service"
+                      ":5432/csye6225\"' >> tomcat.service"
                     ]
                   ]
                 },
