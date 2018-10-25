@@ -213,7 +213,7 @@
                 "echo 'Environment=\"CATALINA_OPTS=-Xms512M -Xmx1024M -server -XX:+UseParallelGC\"' >> tomcat.service",
                 {
                   "Fn::Join": [
-                    ",",
+                    "",
                     [
                       "echo 'Environment=\"JAVA_OPTS=-Djava.awt.headless=true -Dspring.profiles.active=dev -Dspring.datasource.username=csye6225master -Dspring.datasource.password=csye6225password -Dspring.datasource.url=jdbc:postgresql://",
                       {
@@ -222,7 +222,7 @@
                           "Endpoint.Address"
                         ]
                       },
-                      ":5432/csye6225' >> tomcat.service"
+                      ":5432/csye6225-fall2018' >> tomcat.service"
                     ]
                   ]
                 },
