@@ -22,7 +22,7 @@ public class AwsS3Client {
     {
         try {
 
-                s3Client.putObject(new PutObjectRequest(BUCKET_NAME, key_uuid.toString(), file).withCannedAcl(CannedAccessControlList.PublicRead));
+                s3Client.putObject(new PutObjectRequest(BUCKET_NAME, key_uuid.toString(), file).withCannedAcl(CannedAccessControlList.PublicReadWrite));
                 URL url = s3Client.getUrl(BUCKET_NAME, key_uuid.toString());
                 file.delete();
                 return url.toString();
