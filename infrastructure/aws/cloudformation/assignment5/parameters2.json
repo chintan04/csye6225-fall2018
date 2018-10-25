@@ -4,7 +4,7 @@
                     "ParameterKey": "EC2Key"
                 }, 
                 {
-                    "ParameterValue": "csye6225-fall2018-gaikawads.me", 
+                    "ParameterValue": "csye6225-fall2018-shahc.me", 
                     "ParameterKey": "domain"
                 }
             ]

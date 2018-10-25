@@ -6,13 +6,15 @@
 			"Type": "String",
 			"Description": "Your domain name"
 		},
-		"s3bucket":{
+		"s3bucket": {
 			"Type": "String",
-			"Description":"S3 Attachment bucket"
+			"Description": "S3 Attachment bucket"
 		}
 	},
-	"Resources": {
-		"myCodeDeployServiceRole": {
+	"Resources":
+	{
+		"myCodeDeployServiceRole":
+		{
 			"Type": "AWS::IAM::Role",
 			"Properties": {
 				"RoleName": "CodeDeployServiceRole",
@@ -38,7 +40,9 @@
 				]
 			}
 		},
-		"myEC2Role": {
+
+		"myEC2Role":
+		{
 			"Type": "AWS::IAM::Role",
 			"Properties": {
 				"RoleName": "CodeDeployEC2ServiceRole",
@@ -76,6 +80,7 @@
 				]
 			}
 		},
+
 		"codeDeployS3Bucket": {
 			"Type": "AWS::S3::Bucket",
 			"Properties": {
@@ -101,7 +106,7 @@
 							"Effect": "Allow",
 							"Resource": {
 								"Fn::Join": [
-									":",
+									"",
 									[
 										"arn:aws:s3:::",
 										{
@@ -118,6 +123,7 @@
 				]
 			}
 		},
+
 		"myEC2S3AccessPolicy": {
 			"Type": "AWS::IAM::ManagedPolicy",
 			"Properties": {
@@ -136,7 +142,7 @@
 							"Effect": "Allow",
 							"Resource": {
 								"Fn::Join": [
-									":",
+									"",
 									[
 										"arn:aws:s3:::",
 										{
@@ -148,11 +154,10 @@
 						}
 					]
 				},
-				"Roles": [
-					"CodeDeployEC2ServiceRole"
-				]
+				"Roles": ["CodeDeployEC2ServiceRole"]
 			}
 		},
+
 		"myTravistoS3Policy": {
 			"Type": "AWS::IAM::ManagedPolicy",
 			"Properties": {
@@ -187,6 +192,7 @@
 				]
 			}
 		},
+
 		"myTravistoCodeDeloyPolicy": {
 			"Type": "AWS::IAM::ManagedPolicy",
 			"Properties": {
@@ -275,12 +281,11 @@
 				"Users": [
 					"travis"
 				],
-				"Roles": [
-					"CodeDeployServiceRole"
-				]
+				"Roles": ["CodeDeployServiceRole"]
 			}
 		}
 	},
+	
 	"Outputs": {
 		"EC2IAMRole": {
 			"Description": "EC2 IAM role",
@@ -294,13 +299,14 @@
 		"myCodeDeployRole": {
 			"Description": "Code Deploy Arn",
 			"Value": {
-				"Fn::GetAtt": ["myCodeDeployServiceRole", "Arn"]
+				"Fn::GetAtt": [
+					"myCodeDeployServiceRole",
+					"Arn"
+				]
 			},
 			"Export": {
 				"Name": "codedeployarn"
 			}
-
 		}
-
 	}
 }
