@@ -1,0 +1,10 @@
+[
+    {
+        "ParameterValue": "code-deploy.csye6225-fall2018-shahc.me",
+        "ParameterKey": "domain"
+    },
+    {
+        "ParameterValue": "csye6225-fall2018-shahc.me",
+        "ParameterKey": "s3bucket"
+    }
+]
