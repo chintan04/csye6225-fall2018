@@ -114,15 +114,15 @@ public class AttachmentController {
                                 System.out.println("inside convertMultiPartToFile");
 
 
-                                File file = new File(multipartFile.getOriginalFilename());
-                                /*System.out.println("inside convertMultiPartToFile1");
+                                File file = new File(multipartFile.getName());
+                                System.out.println("inside convertMultiPartToFile1");
                                 FileOutputStream fos = new FileOutputStream(file);
                                 System.out.println("inside convertMultiPartToFile2");
                                 fos.write(multipartFile.getBytes());
                                 System.out.println("inside convertMultiPartToFile3");
-                                fos.close();*/
+                                fos.close();
                                 System.out.println("inside convertMultiPartToFile2");
-                                multipartFile.transferTo(file);
+                                //multipartFile.transferTo(file);
                                 System.out.println("inside convertMultiPartToFile4");
 
 
