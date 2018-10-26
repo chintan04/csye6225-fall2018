@@ -92,10 +92,11 @@ public class AttachmentController {
                             String fileExtension = getFileExtension(multipartFile);
                             if (fileExtension.equalsIgnoreCase("jpeg") || fileExtension.equalsIgnoreCase("jpg") || fileExtension.equalsIgnoreCase("png")) {
                                 UUID key_uuid = UUID.randomUUID();
+                                String profile = env.getProperty("profile");
                                 Attachment attachment = new Attachment();
                                 attachment.setAttachment_id(key_uuid);
-                                File file =  AwsS3Client.convertMultiPartToFile(multipartFile);
-                                if (env.getProperty("profile").equals("dev")) {
+                                File file =  AwsS3Client.convertMultiPartToFile(multipartFile,profile);
+                                if (profile.equals("dev")) {
                                      url = AwsS3Client.uploadImg(BUCKET_NAME,key_uuid, file);
                                 }
                                 else
