@@ -41,8 +41,14 @@ public class AwsS3Client {
             System.out.println("Error in AwsS3Client delete method= " +ex.getMessage());
         }
     }
-    public static File convertMultiPartToFile(MultipartFile file) throws IOException {
-        File convFile = new File(file.getOriginalFilename());
+    public static File convertMultiPartToFile(MultipartFile file,String profile) throws IOException {
+        File convFile = null;
+        if (profile.equals("dev")) {
+        convFile = new File(System.getProperty("java.io.tmpdir")+"/"+file.getOriginalFilename());
+        }
+        else {
+            convFile = new File("images/"+file.getOriginalFilename());
+        }
         FileOutputStream fos = new FileOutputStream(convFile);
         fos.write(file.getBytes());
         fos.close();
