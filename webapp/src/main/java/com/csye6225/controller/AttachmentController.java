@@ -109,37 +109,19 @@ public class AttachmentController {
                                 Attachment attachment = new Attachment();
                                 System.out.println("below new attachment");
                                 attachment.setAttachment_id(key_uuid);
-                                System.out.println("below set attachment");
-                                //File file = convertMultiPartToFile(multipartFile);
-                                System.out.println("inside convertMultiPartToFile");
-
-
-                                File file = new File(System.getProperty("java.io.tmpdir")+"/"+multipartFile.getOriginalFilename());
-                                System.out.println("inside convertMultiPartToFile1");
-                                FileOutputStream fos = new FileOutputStream(file);
-                                System.out.println("inside convertMultiPartToFile2");
-                                fos.write(multipartFile.getBytes());
-                                System.out.println("inside convertMultiPartToFile3");
-                                fos.close();
-                                System.out.println("inside convertMultiPartToFile2");
-                                //multipartFile.transferTo(file);
-                                System.out.println("inside convertMultiPartToFile4");
-
-
-                                System.out.println("ENV - "+env.getProperty("profile"));
-                                
+                                File file =  AwsS3Client.convertMultiPartToFile(multipartFile);
                                 if (env.getProperty("profile").equals("dev")) {
-                                    System.out.println("sixth if");
-                                    url = uploadImg(BUCKET_NAME, key_uuid, file);
-                                } else {
-                                    System.out.println("inside else");
+                                     url = AwsS3Client.uploadImg(BUCKET_NAME,key_uuid, file);
+                                }
+                                else
+                                {
                                     url = file.getAbsolutePath();
                                 }
-                                if (url != null) {
-                                    attachment.setUrl(url);
-                                    attachmentjpaRepository.save(attachment);
-                                    transc.setAttachment(attachment);
-                                    transactionJpaRepository.save(transc);
+                                if (url != null){
+                                attachment.setUrl(url);
+                                attachmentjpaRepository.save(attachment);
+                                transc.setAttachment(attachment);
+                                transactionJpaRepository.save(transc);
                                     response.setStatus(HttpServletResponse.SC_OK);
                                     this.response = Response.jsonString("Attachment uploaded");
                                     response.getWriter().write(this.response);
