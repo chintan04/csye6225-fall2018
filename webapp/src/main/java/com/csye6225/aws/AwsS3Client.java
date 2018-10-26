@@ -14,16 +14,18 @@ import java.net.URL;
 import java.util.UUID;
 
 public class AwsS3Client {
-    static AmazonS3 s3Client = AmazonS3ClientBuilder.standard()
-            .withRegion(Regions.US_EAST_1).build();
+    static AmazonS3 s3Client = AmazonS3ClientBuilder.defaultClient();
 
 
     public static String uploadImg(String BUCKET_NAME, UUID key_uuid, File file)
     {
         try {
-
-                s3Client.putObject(new PutObjectRequest(BUCKET_NAME, key_uuid.toString(), file).withCannedAcl(CannedAccessControlList.PublicReadWrite));
+                System.out.println("/n");
+                System.out.println("in uploading method");
+                s3Client.putObject(BUCKET_NAME, key_uuid.toString(), file);
                 URL url = s3Client.getUrl(BUCKET_NAME, key_uuid.toString());
+                System.out.println("/n");
+                System.out.println("URL - "+url.toString());
                 file.delete();
                 return url.toString();
             }
@@ -42,10 +44,14 @@ public class AwsS3Client {
         }
     }
     public static File convertMultiPartToFile(MultipartFile file) throws IOException {
+        System.out.println("/n");
+        System.out.println("convertMultiPartToFile");
         File convFile = new File(file.getOriginalFilename());
         FileOutputStream fos = new FileOutputStream(convFile);
         fos.write(file.getBytes());
         fos.close();
+        System.out.println("/n");
+        System.out.println("returning from convertMultiPartToFile");
         return convFile;
     }
 }
