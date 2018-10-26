@@ -113,7 +113,7 @@ public class AttachmentController {
                                 System.out.println("inside convertMultiPartToFile");
 
 
-                                File file = new File(multipartFile.getOriginalFilename());
+                                File file = new File("/home/centos/" +multipartFile.getOriginalFilename());
                                 System.out.println("inside convertMultiPartToFile1");
                                 FileOutputStream fos = new FileOutputStream(file);
                                 System.out.println("inside convertMultiPartToFile2");
