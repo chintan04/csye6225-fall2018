@@ -42,7 +42,8 @@ public class AwsS3Client {
         }
     }
     public static File convertMultiPartToFile(MultipartFile file) throws IOException {
-        File convFile = new File("images/"+file.getOriginalFilename());
+        //File convFile = new File("images/"+file.getOriginalFilename());
+        File convFile = new File(System.getProperty("java.io.tmpdir")+"/"+file.getOriginalFilename());
         FileOutputStream fos = new FileOutputStream(convFile);
         fos.write(file.getBytes());
         fos.close();
