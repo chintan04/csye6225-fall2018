@@ -31,6 +31,12 @@ public class UsersController {
     public void register(@RequestBody Users user, HttpServletResponse response) {
         try {
             response.setContentType("application/json");
+            if(!user.getUsername().matches("^(.+)@(.+).(.+)$")){
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                this.response = Response.jsonString("Email / Username is not valid");
+                response.getWriter().write(this.response);
+                return;
+            }
             List<Users> loginusers = userJpaRespository.findAll();
             for (Users l: loginusers) {
                 if (l.getUsername().equals(user.getUsername()))
