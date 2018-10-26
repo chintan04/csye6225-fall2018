@@ -179,9 +179,18 @@ public class AttachmentController {
             }
 
         } catch (Exception ex) {
+            ex.printStackTrace();
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            ex.printStackTrace(pw);
+            String sStackTrace = sw.toString(); // stack trace as a string
+            System.out.println();
+            System.out.println("StackTrace " +sStackTrace);
+            System.out.println();
             System.out.println("bucket - "+env.getProperty("bucketName"));
             System.out.println("ENV - "+env.getProperty("profile"));
             System.out.println("Exception" + ex.getMessage());
+
 
         }
 
