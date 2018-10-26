@@ -233,8 +233,9 @@ public class AttachmentController {
                             String fileExtension = getFileExtension(multipartFile);
                             if (fileExtension.equalsIgnoreCase("jpeg") || fileExtension.equalsIgnoreCase("jpg") || fileExtension.equalsIgnoreCase("png")) {
                                 Attachment attachment = transc.getAttachment();
-                                File file =  AwsS3Client.convertMultiPartToFile(multipartFile);
-                                if(env.getProperty("profile").equals("dev")) {
+                                String profile = env.getProperty("profile");
+                                File file =  AwsS3Client.convertMultiPartToFile(multipartFile,profile);
+                                if(profile.equals("dev")) {
                                      url = AwsS3Client.uploadImg(BUCKET_NAME,attachment.getAttachment_id(), file);
                                 }
                                 else {
