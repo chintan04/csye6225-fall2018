@@ -147,7 +147,7 @@ public class AttachmentController {
 
         } catch (Exception ex) {
             System.out.println("message - "+ex.getMessage());
-            System.out.println("printstack - "+ex.printStackTrace().toString());
+            
             System.out.println("bucket - "+env.getProperty("bucketName"));
             System.out.println("ENV - "+env.getProperty("profile"));
             System.out.println("Exception" + ex.getMessage());
