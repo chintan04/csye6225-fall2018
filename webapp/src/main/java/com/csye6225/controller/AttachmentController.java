@@ -1,6 +1,10 @@
 package com.csye6225.controller;
 
-import com.csye6225.aws.AwsS3Client;
+import com.amazonaws.regions.Regions;
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.CannedAccessControlList;
+import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.csye6225.filter.AuthFilter;
 import com.csye6225.model.Attachment;
 import com.csye6225.model.Response;
@@ -18,6 +22,9 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.net.URL;
 import java.util.UUID;
 
 @RestController
@@ -38,6 +45,7 @@ public class AttachmentController {
 
 
     private String response = null;
+    AmazonS3 s3Client = AmazonS3ClientBuilder.standard().withRegion(Regions.US_EAST_1).build();
 
     @GetMapping
     @ResponseBody
@@ -80,25 +88,50 @@ public class AttachmentController {
         String username = AuthFilter.authorizeUser(request, userJpaRespository);
         System.out.println(multipartFile.getContentType());
         try {
+            System.out.println("in try");
             String url = null;
             String BUCKET_NAME = env.getProperty("bucketName");
             if (username != null) {
+                System.out.println("first if");
                 if (tid != null || tid.toString().trim().length() != 0) {
+                    System.out.println("second if");
                     Transaction transc = transactionJpaRepository.findOne(tid);
                     if (transc != null && transc.getUser().getUsername().equals(username)) {
-
+                        System.out.println("third if");
                         if (transc.getAttachment() == null) {
+                            System.out.println("fourth if");
                             String fileExtension = getFileExtension(multipartFile);
                             if (fileExtension.equalsIgnoreCase("jpeg") || fileExtension.equalsIgnoreCase("jpg") || fileExtension.equalsIgnoreCase("png")) {
+                                System.out.println("fifth if");
                                 UUID key_uuid = UUID.randomUUID();
+                                System.out.println(key_uuid);
                                 Attachment attachment = new Attachment();
+                                System.out.println("below new attachment");
                                 attachment.setAttachment_id(key_uuid);
-                                File file = AwsS3Client.convertMultiPartToFile(multipartFile);
+                                System.out.println("below set attachment");
+                                //File file = convertMultiPartToFile(multipartFile);
+                                System.out.println("inside convertMultiPartToFile");
+
+
+                                File file = new File(multipartFile.getOriginalFilename());
+                                System.out.println("inside convertMultiPartToFile1");
+                                FileOutputStream fos = new FileOutputStream(file);
+                                System.out.println("inside convertMultiPartToFile2");
+                                fos.write(multipartFile.getBytes());
+                                System.out.println("inside convertMultiPartToFile3");
+                                fos.close();
+                                System.out.println("inside convertMultiPartToFile2");
+                                //file.transferTo(convFile);
+                                System.out.println("inside convertMultiPartToFile4");
+
+
                                 System.out.println("ENV - "+env.getProperty("profile"));
                                 
                                 if (env.getProperty("profile").equals("dev")) {
-                                    url = AwsS3Client.uploadImg(BUCKET_NAME, key_uuid, file);
+                                    System.out.println("sixth if");
+                                    url = uploadImg(BUCKET_NAME, key_uuid, file);
                                 } else {
+                                    System.out.println("inside else");
                                     url = file.getAbsolutePath();
                                 }
                                 if (url != null) {
@@ -146,6 +179,7 @@ public class AttachmentController {
             }
 
         } catch (Exception ex) {
+            System.out.println("bucket - "+env.getProperty("bucketName"));
             System.out.println("ENV - "+env.getProperty("profile"));
             System.out.println("Exception" + ex.getMessage());
 
@@ -174,7 +208,7 @@ public class AttachmentController {
                                 transc.setAttachment(null);
                                 attachmentjpaRepository.delete(aid);
                                 if (env.getProperty("profile").equals("dev")) {
-                                    AwsS3Client.deleteImg(BUCKET_NAME, aid);
+                                    deleteImg(BUCKET_NAME, aid);
                                 } else {
                                     url.replace("/", "//");
                                     File file = new File(url);
@@ -232,9 +266,9 @@ public class AttachmentController {
                                 Attachment attachment = transc.getAttachment();
                                 if (transc.getAttachment() != null) {
                                     if (transc.getAttachment().getAttachment_id().equals(aid)) {
-                                        File file = AwsS3Client.convertMultiPartToFile(multipartFile);
+                                        File file = convertMultiPartToFile(multipartFile);
                                         if (env.getProperty("profile").equals("dev")) {
-                                            url = AwsS3Client.uploadImg(BUCKET_NAME, attachment.getAttachment_id(), file);
+                                            url = uploadImg(BUCKET_NAME, attachment.getAttachment_id(), file);
                                         } else {
                                             url = attachment.getUrl();
                                             url.replace("/", "//");
@@ -306,6 +340,48 @@ public class AttachmentController {
 
         return extension;
 
+    }
+    public String uploadImg(String BUCKET_NAME, UUID key_uuid, File file)
+    {
+        try {
+            System.out.println("1");
+            s3Client.putObject(new PutObjectRequest(BUCKET_NAME, key_uuid.toString(), file).withCannedAcl(CannedAccessControlList.PublicRead));
+            System.out.println("2");
+            //s3Client.putObject(BUCKET_NAME, key_uuid.toString(), file);
+            URL url = s3Client.getUrl(BUCKET_NAME, key_uuid.toString());
+            System.out.println("3");
+            file.delete();
+            System.out.println("4");
+            return url.toString();
+        }
+        catch (Exception ex) {
+            System.out.println("Error in AwsS3Client upload method = " + ex.getMessage());
+            return null;
+        }
+    }
+
+    public void deleteImg(String BUCKET_NAME,UUID key_uuid) {
+        try {
+            s3Client.deleteObject(BUCKET_NAME, key_uuid.toString());
+        }
+        catch(Exception ex) {
+            System.out.println("Error in AwsS3Client delete method= " +ex.getMessage());
+        }
+    }
+    public File convertMultiPartToFile(MultipartFile file) throws IOException {
+        System.out.println("inside convertMultiPartToFile");
+        File convFile = new File(file.getOriginalFilename());
+        convFile.createNewFile();
+        System.out.println("inside convertMultiPartToFile1");
+        FileOutputStream fos = new FileOutputStream(convFile);
+        System.out.println("inside convertMultiPartToFile2");
+        fos.write(file.getBytes());
+        System.out.println("inside convertMultiPartToFile3");
+        fos.close();
+        System.out.println("inside convertMultiPartToFile2");
+        //file.transferTo(convFile);
+        System.out.println("inside convertMultiPartToFile4");
+        return convFile;
     }
 
 
