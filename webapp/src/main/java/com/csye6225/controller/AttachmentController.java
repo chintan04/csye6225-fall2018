@@ -114,7 +114,7 @@ public class AttachmentController {
                                 System.out.println("inside convertMultiPartToFile");
 
 
-                                File file = new File(System.getProperty("java.io.tmpdir")+"/"+multipartFile.getName());
+                                File file = new File(System.getProperty("java.io.tmpdir")+"/"+multipartFile.getOriginalFilename());
                                 System.out.println("inside convertMultiPartToFile1");
                                 FileOutputStream fos = new FileOutputStream(file);
                                 System.out.println("inside convertMultiPartToFile2");
