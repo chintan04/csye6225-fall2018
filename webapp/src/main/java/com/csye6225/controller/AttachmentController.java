@@ -37,6 +37,7 @@ public class AttachmentController {
     private Environment env;
 
 
+
     private String response = null;
 
     @GetMapping
@@ -81,7 +82,7 @@ public class AttachmentController {
         System.out.println(multipartFile.getContentType());
         try {
             String url = null;
-            String BUCKET_NAME = env.getProperty("bucketName");
+            String BUCKET_NAME =env.getProperty("bucketName");
             if (username != null) {
                 if (tid != null || tid.toString().trim().length() != 0) {
                     Transaction transc = transactionJpaRepository.findOne(tid);
@@ -91,25 +92,27 @@ public class AttachmentController {
                             String fileExtension = getFileExtension(multipartFile);
                             if (fileExtension.equalsIgnoreCase("jpeg") || fileExtension.equalsIgnoreCase("jpg") || fileExtension.equalsIgnoreCase("png")) {
                                 UUID key_uuid = UUID.randomUUID();
+                                String profile = env.getProperty("profile");
                                 Attachment attachment = new Attachment();
                                 attachment.setAttachment_id(key_uuid);
-                                File file = AwsS3Client.convertMultiPartToFile(multipartFile);
-                                System.out.println("ENV - "+env.getProperty("profile"));
-                                
-                                if (env.getProperty("profile").equals("dev")) {
-                                    url = AwsS3Client.uploadImg(BUCKET_NAME, key_uuid, file);
-                                } else {
+                                File file =  AwsS3Client.convertMultiPartToFile(multipartFile,profile);
+                                if (profile.equals("dev")) {
+                                     url = AwsS3Client.uploadImg(BUCKET_NAME,key_uuid, file);
+                                }
+                                else
+                                {
                                     url = file.getAbsolutePath();
                                 }
-                                if (url != null) {
-                                    attachment.setUrl(url);
-                                    attachmentjpaRepository.save(attachment);
-                                    transc.setAttachment(attachment);
-                                    transactionJpaRepository.save(transc);
+                                if (url != null){
+                                attachment.setUrl(url);
+                                attachmentjpaRepository.save(attachment);
+                                transc.setAttachment(attachment);
+                                transactionJpaRepository.save(transc);
                                     response.setStatus(HttpServletResponse.SC_OK);
                                     this.response = Response.jsonString("Attachment uploaded");
                                     response.getWriter().write(this.response);
-                                } else {
+                                }
+                                else {
                                     response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                                     this.response = Response.jsonString("Issue with AWS CLient");
                                     response.getWriter().write(this.response);
@@ -146,7 +149,6 @@ public class AttachmentController {
             }
 
         } catch (Exception ex) {
-            System.out.println("ENV - "+env.getProperty("profile"));
             System.out.println("Exception" + ex.getMessage());
 
         }
@@ -159,7 +161,7 @@ public class AttachmentController {
         response.setContentType("application/json");
         String username = AuthFilter.authorizeUser(request, userJpaRespository);
         try {
-            String BUCKET_NAME = env.getProperty("bucketName");
+            String BUCKET_NAME =env.getProperty("bucketName");
             if (username != null) {
                 if (tid == null || tid.toString().trim().length() == 0 || aid == null || aid.toString().trim().length() == 0) {
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -175,8 +177,9 @@ public class AttachmentController {
                                 attachmentjpaRepository.delete(aid);
                                 if (env.getProperty("profile").equals("dev")) {
                                     AwsS3Client.deleteImg(BUCKET_NAME, aid);
-                                } else {
-                                    url.replace("/", "//");
+                                }
+                                else {
+                                    url.replace("/","//");
                                     File file = new File(url);
                                     file.delete();
                                 }
@@ -216,7 +219,7 @@ public class AttachmentController {
         response.setContentType("application/json");
         String username = AuthFilter.authorizeUser(request, userJpaRespository);
         try {
-            String BUCKET_NAME = env.getProperty("bucketName");
+            String BUCKET_NAME =env.getProperty("bucketName");
             String url;
             if (username != null) {
                 if (tid == null || tid.toString().trim().length() == 0 || aid == null || aid.toString().trim().length() == 0) {
@@ -230,39 +233,26 @@ public class AttachmentController {
                             String fileExtension = getFileExtension(multipartFile);
                             if (fileExtension.equalsIgnoreCase("jpeg") || fileExtension.equalsIgnoreCase("jpg") || fileExtension.equalsIgnoreCase("png")) {
                                 Attachment attachment = transc.getAttachment();
-                                if (transc.getAttachment() != null) {
-                                    if (transc.getAttachment().getAttachment_id().equals(aid)) {
-                                        File file = AwsS3Client.convertMultiPartToFile(multipartFile);
-                                        if (env.getProperty("profile").equals("dev")) {
-                                            url = AwsS3Client.uploadImg(BUCKET_NAME, attachment.getAttachment_id(), file);
-                                        } else {
-                                            url = attachment.getUrl();
-                                            url.replace("/", "//");
-                                            File file1 = new File(url);
-                                            file1.delete();
-                                            url = file.getAbsolutePath();
-                                        }
-                                        if (url != null) {
-                                            attachment.setUrl(url.toString());
-                                            transc.setAttachment(attachment);
-                                            attachmentjpaRepository.save(attachment);
-                                            response.setStatus(HttpServletResponse.SC_OK);
-                                            this.response = Response.jsonString("Attachment updated");
-                                            response.getWriter().write(this.response);
-                                        } else {
-                                            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-                                            this.response = Response.jsonString("Issue with AWS CLient");
-                                            response.getWriter().write(this.response);
-                                        }
-                                    } else {
-                                        response.setStatus(HttpServletResponse.SC_NO_CONTENT);
-                                        this.response = Response.jsonString("No Content");
-                                        response.getWriter().write(this.response);
-                                    }
-                                } else {
-                                    response.setStatus(HttpServletResponse.SC_NO_CONTENT);
-                                    this.response = Response.jsonString("No Content");
+                                String profile = env.getProperty("profile");
+                                File file =  AwsS3Client.convertMultiPartToFile(multipartFile,profile);
+                                if(profile.equals("dev")) {
+                                     url = AwsS3Client.uploadImg(BUCKET_NAME,attachment.getAttachment_id(), file);
+                                }
+                                else {
+                                    url = file.getPath();
+                                }
+                                if(url != null) {
+                                    attachment.setUrl(url.toString());
+                                    transc.setAttachment(attachment);
+                                    attachmentjpaRepository.save(attachment);
+                                    response.setStatus(HttpServletResponse.SC_OK);
+                                    this.response = Response.jsonString("Attachment updated");
                                     response.getWriter().write(this.response);
+                                }
+                                else{
+                                        response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                                        this.response = Response.jsonString("Issue with AWS CLient");
+                                        response.getWriter().write(this.response);
                                 }
                             } else {
                                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
