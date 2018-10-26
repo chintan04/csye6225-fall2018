@@ -1,5 +1,6 @@
 package com.csye6225.controller;
 
+import com.csye6225.aws.AwsS3Client;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
