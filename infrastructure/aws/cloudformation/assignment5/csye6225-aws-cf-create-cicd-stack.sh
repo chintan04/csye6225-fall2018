@@ -2,7 +2,7 @@
 
 echo "Enter the name for CICD stack"
 read cicd
-aws cloudformation create-stack --stack-name $cicd --template-body file://csye6225-cf-cicd.json --parameters file://parameters3.json --capabilities CAPABILITY_NAMED_IAM
+aws cloudformation create-stack --stack-name $cicd --template-body file://csye6225-cf-cicd.json --parameters file://cicdStackParameter.json --capabilities CAPABILITY_NAMED_IAM
 
 aws cloudformation wait stack-create-complete --stack-name $cicd
 

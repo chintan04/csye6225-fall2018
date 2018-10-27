@@ -2,9 +2,9 @@
   "AWSTemplateFormatVersion": "2010-09-09",
   "Description": "AWS CloudFormation Template",
   "Parameters": {
-    "domain": {
+    "s3AppBucket": {
       "Type": "String",
-      "Description": "Your domain name"
+      "Description": "S3 Bucket to store the attachments"
     },
     "EC2Key": {
       "Type": "String",
@@ -189,6 +189,7 @@
                 "sudo su",
                 "yum update -y",
                 "yum install ruby ntp wget java-1.8.0-openjdk-devel -y",
+                "yum install postgresql.x86_64 -y",
                 "wget https://aws-codedeploy-us-east-1.s3.amazonaws.com/latest/install",
                 "chmod +x ./install",
                 "./install auto",
@@ -228,7 +229,11 @@
                           "Endpoint.Address"
                         ]
                       },
-                      ":5432/csye6225\"' >> tomcat.service"
+                      ":5432/csye6225 -DbucketName=",
+                      {
+                        "Ref": "s3AppBucket"
+                      },
+                      "\"' >> tomcat.service"
                     ]
                   ]
                 },
@@ -308,7 +313,7 @@
       "Type": "AWS::S3::Bucket",
       "Properties": {
         "BucketName": {
-          "Ref": "domain"
+          "Ref": "s3AppBucket"
         }
       }
     }
