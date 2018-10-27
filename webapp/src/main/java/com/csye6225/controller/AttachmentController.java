@@ -109,7 +109,7 @@ public class AttachmentController {
                                 transc.setAttachment(attachment);
                                 transactionJpaRepository.save(transc);
                                     response.setStatus(HttpServletResponse.SC_OK);
-                                    this.response = Response.jsonString("Attachment uploaded");
+                                    this.response = Response.jsonString("Attachment uploaded with url " + url);
                                     response.getWriter().write(this.response);
                                 }
                                 else {
