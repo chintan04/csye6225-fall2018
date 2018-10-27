@@ -1,10 +1,10 @@
 [
     {
-        "ParameterValue": "code-deploy.csye6225-fall2018-shahc.me",
+        "ParameterValue": "code-deploy.csye6225-fall2018-nigama.me.csye6225.com",
         "ParameterKey": "domain"
     },
     {
-        "ParameterValue": "csye6225-fall2018-shahc.me",
+        "ParameterValue": "csye6225-fall2018-nigama.me.csye6225.com",
         "ParameterKey": "s3bucket"
     }
 ]
