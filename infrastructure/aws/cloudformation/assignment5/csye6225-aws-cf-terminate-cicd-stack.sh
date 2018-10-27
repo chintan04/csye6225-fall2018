@@ -19,9 +19,9 @@ read stack
 id=$(aws cloudformation describe-stacks --stack-name $stack --query "Stacks[*].StackId" --output text 2>&1)
 
 
-bucket_name=$(aws route53 list-hosted-zones --query HostedZones[].{Name:Name} --output text)
-com=csye6225.com
-bucket=code-deploy.$bucket_name$com
+bucket_name=$(aws route53 list-hosted-zones --query HostedZones[].{Name:Name} --output text|sed 's/.$//')
+
+bucket=code-deploy.$bucket_name
 echo $bucket
 
 #delete code deploy bucket
