@@ -2,11 +2,11 @@
 	"AWSTemplateFormatVersion": "2010-09-09",
 	"Description": "AWS CICD Template",
 	"Parameters": {
-		"domain": {
+		"s3CodeDeploybucket": {
 			"Type": "String",
-			"Description": "Your domain name"
+			"Description": "S3 CodeDeploy bucket"
 		},
-		"s3bucket": {
+		"s3Attachmentbucket": {
 			"Type": "String",
 			"Description": "S3 Attachment bucket"
 		}
@@ -85,7 +85,7 @@
 			"Type": "AWS::S3::Bucket",
 			"Properties": {
 				"BucketName": {
-					"Ref": "domain"
+					"Ref": "s3CodeDeploybucket"
 				}
 			}
 		},
@@ -110,7 +110,7 @@
 									[
 										"arn:aws:s3:::",
 										{
-											"Ref": "domain"
+											"Ref": "s3CodeDeploybucket"
 										}
 									]
 								]
@@ -146,7 +146,7 @@
 									[
 										"arn:aws:s3:::",
 										{
-											"Ref": "s3bucket"
+											"Ref": "s3Attachmentbucket"
 										}
 									]
 								]
@@ -178,7 +178,7 @@
 										[
 											"arn:aws:s3:::",
 											{
-												"Ref": "domain"
+												"Ref": "s3CodeDeploybucket"
 											}
 										]
 									]

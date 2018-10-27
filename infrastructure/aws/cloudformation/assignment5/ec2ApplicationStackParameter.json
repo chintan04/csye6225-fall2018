@@ -4,7 +4,7 @@
                     "ParameterKey": "EC2Key"
                 }, 
                 {
-                    "ParameterValue": "csye6225-fall2018-shahc.me", 
-                    "ParameterKey": "domain"
+                    "ParameterValue": "csye6225-fall2018-shahc.me.csye6225.com", 
+                    "ParameterKey": "s3AppBucket"
                 }
             ]
