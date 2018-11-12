@@ -41,6 +41,35 @@
 			}
 		},
 
+		"myLambdaRole":
+		{
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"RoleName": "myLambdaRole",
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": [
+									"lambda.amazonaws.com"
+								]
+							},
+							"Action": [
+								"sts:AssumeRole"
+							]
+						}
+					]
+				},
+				"Path": "/",
+				"ManagedPolicyArns": [
+					"arn:aws:iam::aws:policy/service-role/AWSCodeDeployRoleForLambda",
+					"arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess", "arn:aws:iam::aws:policy/AmazonSESFullAccess"
+				]
+			}
+		},
+
 		"myEC2Role":
 		{
 			"Type": "AWS::IAM::Role",
@@ -63,6 +92,7 @@
 					]
 				},
 				"Path": "/",
+				"ManagedPolicyArns":["arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy", "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM","arn:aws:iam::aws:policy/CloudWatchAgentAdminPolicy"],
 				"Policies": [
 					{
 						"PolicyName": "CodeDeploy-EC2-S3",

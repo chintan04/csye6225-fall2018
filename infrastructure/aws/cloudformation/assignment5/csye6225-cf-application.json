@@ -102,7 +102,11 @@
         "ProvisionedThroughput": {
           "ReadCapacityUnits": 5,
           "WriteCapacityUnits": 5
-        }
+        },
+        "TimeToLiveSpecification": {
+					"AttributeName": "ttl",
+    			"Enabled": "TRUE"
+				}
       }
     },
     "myRDSInstance": {
@@ -250,13 +254,26 @@
                 "#systemctl start cloudwatch.service",
                 "#systemctl enable cloudwatch.service",
                 "systemctl enable tomcat.service",
-                "systemctl start tomcat.service"
+                "systemctl start tomcat.service",
+                "wget https://s3.amazonaws.com/amazoncloudwatch-agent/centos/amd64/latest/amazon-cloudwatch-agent.rpm"
               ]
             ]
           }
         }
       }
     },
+    "mySNSTopic":
+		{
+		  "Type" : "AWS::SNS::Topic",
+		  "Properties":
+		  {
+
+		    "TopicName" : "password_reset",
+		    "DisplayName":"password_reset"
+		  }
+
+
+		},
     "myInstanceProfile": {
       "Type": "AWS::IAM::InstanceProfile",
       "Properties": {
