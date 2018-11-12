@@ -114,8 +114,9 @@ public class UsersController {
             Users user = userJpaRespository.findOne(email);
             if(user!=null)
             {
-                String arn =  sns.createTopic("password_reset").getTopicArn();
+               
                 AmazonSNS amazonSNS = AmazonSNSClientBuilder.defaultClient();
+                 String arn =  sns.createTopic("password_reset").getTopicArn();
                 PublishRequest publishRequest = new PublishRequest(arn, email);
                 PublishResult publishResult = amazonSNS.publish(publishRequest);
             }
