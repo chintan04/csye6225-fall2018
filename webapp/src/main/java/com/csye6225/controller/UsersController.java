@@ -106,9 +106,11 @@ public class UsersController {
         try {
             response.setContentType("application/json");
             Users user = userJpaRespository.findOne(email);
-            if(user!=null)
+            if(true)
             {
-               
+                this.response = Response.jsonString(email);
+                response.getWriter().write(this.response);
+               // return;
                 AmazonSNS amazonSNS = AmazonSNSClientBuilder.defaultClient();
                  String arn =  amazonSNS.createTopic("password_reset").getTopicArn();
                 PublishRequest publishRequest = new PublishRequest(arn, email);
@@ -117,7 +119,7 @@ public class UsersController {
             else
             {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                this.response = Response.jsonString("Username/email not present");
+                this.response = Response.jsonString("Username/email not present" +email);
                 response.getWriter().write(this.response);
                 return;
 
