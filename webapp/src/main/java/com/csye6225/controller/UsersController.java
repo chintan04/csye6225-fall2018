@@ -105,12 +105,6 @@ public class UsersController {
     public void resetPassword(HttpServletRequest httpRequest, HttpServletResponse response, @RequestBody String email) {
         try {
             response.setContentType("application/json");
-            if(!email.matches("^(.+)@(.+)\\.(.+)$")){
-                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                this.response = Response.jsonString("Email / Username is not valid");
-                response.getWriter().write(this.response);
-                return;
-            }
             Users user = userJpaRespository.findOne(email);
             if(user!=null)
             {
