@@ -1,5 +1,9 @@
 package com.csye6225.controller;
 
+import com.amazonaws.services.sns.AmazonSNS;
+import com.amazonaws.services.sns.AmazonSNSClientBuilder;
+import com.amazonaws.services.sns.model.PublishRequest;
+import com.amazonaws.services.sns.model.PublishResult;
 import com.csye6225.model.Response;
 import com.csye6225.model.Users;
 import com.csye6225.repository.UserJpaRespository;
@@ -94,6 +98,41 @@ public class UsersController {
         catch(Exception ex) {
 
         }
+    }
+
+    @PostMapping(value = "/reset")
+    @ResponseBody
+    public void resetPassword(HttpServletRequest httpRequest, HttpServletResponse response, @RequestBody String email) {
+        try {
+            response.setContentType("application/json");
+            if(!email.matches("^(.+)@(.+)\\.(.+)$")){
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                this.response = Response.jsonString("Email / Username is not valid");
+                response.getWriter().write(this.response);
+                return;
+            }
+            Users user = userJpaRespository.findOne(email);
+            if(user!=null)
+            {
+                String arn = System.getProperty("snsTopicARN");
+                AmazonSNS amazonSNS = AmazonSNSClientBuilder.defaultClient();
+                PublishRequest publishRequest = new PublishRequest(arn, email);
+                PublishResult publishResult = amazonSNS.publish(publishRequest);
+            }
+            else
+            {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                this.response = Response.jsonString("Username/email not present");
+                response.getWriter().write(this.response);
+                return;
+
+            }
+
+        }
+        catch(Exception ex) {
+
+        }
+
     }
 
 }
