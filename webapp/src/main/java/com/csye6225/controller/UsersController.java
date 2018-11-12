@@ -116,7 +116,7 @@ public class UsersController {
             {
                
                 AmazonSNS amazonSNS = AmazonSNSClientBuilder.defaultClient();
-                 String arn =  sns.createTopic("password_reset").getTopicArn();
+                 String arn =  amazonSNS.createTopic("password_reset").getTopicArn();
                 PublishRequest publishRequest = new PublishRequest(arn, email);
                 PublishResult publishResult = amazonSNS.publish(publishRequest);
             }
