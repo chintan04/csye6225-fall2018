@@ -119,8 +119,8 @@ public class UsersController {
                 PublishRequest publishRequest = new PublishRequest(arn, email);
                 System.out.println("Publish Request created.......");
                 PublishResult publishResult = amazonSNS.publish(publishRequest);
-                 System.out.println("Result published - " + result.getMessageId());
-                this.response = Response.jsonString(result.getMessageId());
+                 System.out.println("Result published - " + publishResult.getMessageId());
+                this.response = Response.jsonString(publishResult.getMessageId());
                 response.getWriter().write(this.response);
             }
             else
