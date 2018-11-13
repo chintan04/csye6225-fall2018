@@ -9,6 +9,7 @@ import com.csye6225.repository.AttachmentjpaRepository;
 import com.csye6225.repository.TransactionJpaRepository;
 import com.csye6225.repository.UserJpaRespository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.timgroup.statsd.StatsDClient;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.core.env.Environment;
@@ -36,6 +37,9 @@ public class AttachmentController {
     @Autowired
     private Environment env;
 
+    @Autowired
+    private StatsDClient statsd;
+
 
 
     private String response = null;
@@ -43,6 +47,7 @@ public class AttachmentController {
     @GetMapping
     @ResponseBody
     public void getAttachment(HttpServletRequest request, HttpServletResponse response, @PathVariable UUID tid) {
+        statsd.incrementCounter("endpoint.attachment.http.get");
         response.setContentType("application/json");
         String username = AuthFilter.authorizeUser(request, userJpaRespository);
         try {
@@ -77,6 +82,7 @@ public class AttachmentController {
     @PostMapping(consumes = {"multipart/form-data"})
     @ResponseBody
     public void addAttachment(HttpServletRequest request, HttpServletResponse response, @PathVariable UUID tid, @RequestPart("file") MultipartFile multipartFile) {
+        statsd.incrementCounter("endpoint.attachment.http.post");
         response.setContentType("application/json");
         String username = AuthFilter.authorizeUser(request, userJpaRespository);
         System.out.println(multipartFile.getContentType());
@@ -158,6 +164,7 @@ public class AttachmentController {
     @DeleteMapping(value = "/{aid}")
     @ResponseBody
     public void deleteAttachemnt(HttpServletRequest request, HttpServletResponse response, @PathVariable UUID tid, @PathVariable UUID aid) {
+        statsd.incrementCounter("endpoint.attachment.http.delete");
         response.setContentType("application/json");
         String username = AuthFilter.authorizeUser(request, userJpaRespository);
         try {
@@ -216,6 +223,7 @@ public class AttachmentController {
     @PutMapping(value = "/{aid}")
     @ResponseBody
     public void updateAttachment(HttpServletRequest request, HttpServletResponse response, @PathVariable UUID tid, @PathVariable UUID aid, @RequestPart("file") MultipartFile multipartFile) {
+        statsd.incrementCounter("endpoint.attachment.http.put");
         response.setContentType("application/json");
         String username = AuthFilter.authorizeUser(request, userJpaRespository);
         try {
