@@ -108,13 +108,20 @@ public class UsersController {
             Users user = userJpaRespository.findOne(email);
             if(true)
             {
+                System.out.println("try email - "+email);
                 this.response = Response.jsonString(email);
                 response.getWriter().write(this.response);
                // return;
                 AmazonSNS amazonSNS = AmazonSNSClientBuilder.defaultClient();
+                System.out.println("Getting ARN........");
                  String arn =  amazonSNS.createTopic("password_reset").getTopicArn();
+                System.out.println("ARN - "+arn);
                 PublishRequest publishRequest = new PublishRequest(arn, email);
+                System.out.println("Publish Request created.......");
                 PublishResult publishResult = amazonSNS.publish(publishRequest);
+                 System.out.println("Result published - " + result.getMessageId());
+                this.response = Response.jsonString(result.getMessageId());
+                response.getWriter().write(this.response);
             }
             else
             {
@@ -127,7 +134,7 @@ public class UsersController {
 
         }
         catch(Exception ex) {
-
+            System.out.println("Exception = " + ex.getMessage());
         }
 
     }
