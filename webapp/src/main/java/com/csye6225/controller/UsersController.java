@@ -105,24 +105,21 @@ public class UsersController {
     public void resetPassword(HttpServletRequest httpRequest, HttpServletResponse response, @RequestBody String email) {
         try {
             response.setContentType("application/json");
-            if(!email.matches("^(.+)@(.+)\\.(.+)$")){
-                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                this.response = Response.jsonString("Email / Username is not valid");
-                response.getWriter().write(this.response);
-                return;
-            }
             Users user = userJpaRespository.findOne(email);
-            if(user!=null)
+            if(true)
             {
-                String arn = System.getProperty("snsTopicARN");
+                this.response = Response.jsonString(email);
+                response.getWriter().write(this.response);
+               // return;
                 AmazonSNS amazonSNS = AmazonSNSClientBuilder.defaultClient();
+                 String arn =  amazonSNS.createTopic("password_reset").getTopicArn();
                 PublishRequest publishRequest = new PublishRequest(arn, email);
                 PublishResult publishResult = amazonSNS.publish(publishRequest);
             }
             else
             {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                this.response = Response.jsonString("Username/email not present");
+                this.response = Response.jsonString("Username/email not present" +email);
                 response.getWriter().write(this.response);
                 return;
 
