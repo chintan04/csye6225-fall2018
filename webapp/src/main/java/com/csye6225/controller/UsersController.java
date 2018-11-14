@@ -107,7 +107,7 @@ public class UsersController {
         }
     }
 
-    @PostMapping(value = "/reset")
+    @PostMapping(value = "/reset",produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public void resetPassword(HttpServletRequest httpRequest, HttpServletResponse response, @RequestBody String email) {
         try {
