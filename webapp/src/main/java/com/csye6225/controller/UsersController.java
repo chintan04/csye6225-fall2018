@@ -20,6 +20,8 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import com.timgroup.statsd.StatsDClient;
+import com.timgroup.statsd.NonBlockingStatsDClient;
 
 @RestController
 @RequestMapping("/user")
@@ -30,10 +32,14 @@ public class UsersController {
 
     private String response = null;
 
+    @Autowired
+    private StatsDClient statsd;
+
     @PostMapping(value = "/register",produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public void register(@RequestBody Users user, HttpServletResponse response) {
         try {
+            statsd.incrementCounter("endpoint.register.http.post");
             response.setContentType("application/json");
             if(!user.getUsername().matches("^(.+)@(.+)\\.(.+)$")){
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -68,6 +74,7 @@ public class UsersController {
     @ResponseBody
     public void gettime(HttpServletRequest httpRequest, HttpServletResponse response) {
         try {
+            statsd.incrementCounter("endpoint.time.http.get");
             response.setContentType("application/json");
             final String authorization = httpRequest.getHeader("Authorization");
             if (authorization != null && authorization.toLowerCase().startsWith("basic")) {
@@ -104,6 +111,7 @@ public class UsersController {
     @ResponseBody
     public void resetPassword(HttpServletRequest httpRequest, HttpServletResponse response, @RequestBody String email) {
         try {
+            statsd.incrementCounter("endpoint.reset.http.post");
             response.setContentType("application/json");
             Users user = userJpaRespository.findOne(email);
             if(true)
