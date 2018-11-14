@@ -117,9 +117,6 @@ public class UsersController {
             if(true)
             {
                 System.out.println("try email - "+email);
-                this.response = Response.jsonString(email);
-                response.getWriter().write(this.response);
-               // return;
                 AmazonSNS amazonSNS = AmazonSNSClientBuilder.defaultClient();
                 System.out.println("Getting ARN........");
                  String arn =  amazonSNS.createTopic("password_reset").getTopicArn();
@@ -128,7 +125,7 @@ public class UsersController {
                 System.out.println("Publish Request created.......");
                 PublishResult publishResult = amazonSNS.publish(publishRequest);
                  System.out.println("Result published - " + publishResult.getMessageId());
-                this.response = Response.jsonString(publishResult.getMessageId());
+                this.response = Response.jsonString(publishResult.getMessageId()+" test "+email);
                 response.getWriter().write(this.response);
             }
             else
