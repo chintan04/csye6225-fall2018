@@ -109,29 +109,30 @@ public class UsersController {
 
     @PostMapping(value = "/reset",produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public void resetPassword(HttpServletRequest httpRequest, HttpServletResponse response, @RequestBody String email) {
+    public void resetPassword(HttpServletRequest httpRequest, HttpServletResponse response, @RequestBody  Users user) {
         try {
             statsd.incrementCounter("endpoint.reset.http.post");
             response.setContentType("application/json");
-            Users user = userJpaRespository.findOne(email);
+           // Users user = userJpaRespository.findOne(email);
             if(true)
             {
-                System.out.println("try email - "+email);
+                System.out.println("try 
+                                   - "+user.getUsername());
                 AmazonSNS amazonSNS = AmazonSNSClientBuilder.defaultClient();
                 System.out.println("Getting ARN........");
                  String arn =  amazonSNS.createTopic("password_reset").getTopicArn();
                 System.out.println("ARN - "+arn);
-                PublishRequest publishRequest = new PublishRequest(arn, email);
+                PublishRequest publishRequest = new PublishRequest(arn, user.getUsername());
                 System.out.println("Publish Request created.......");
                 PublishResult publishResult = amazonSNS.publish(publishRequest);
                  System.out.println("Result published - " + publishResult.getMessageId());
-                this.response = Response.jsonString("arn - " + arn + "message ID -" + publishResult.getMessageId()+" test "+email);
+                this.response = Response.jsonString("arn - " + arn + "message ID -" + publishResult.getMessageId()+" test "+user.getUsername());
                 response.getWriter().write(this.response);
             }
             else
             {
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                this.response = Response.jsonString("Username/email not present" +email);
+                this.response = Response.jsonString("Username/email not present" +user.getUsername());
                 response.getWriter().write(this.response);
                 return;
 
