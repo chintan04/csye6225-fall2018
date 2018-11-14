@@ -116,8 +116,7 @@ public class UsersController {
            // Users user = userJpaRespository.findOne(email);
             if(true)
             {
-                System.out.println("try 
-                                   - "+user.getUsername());
+                System.out.println("try - " + user.getUsername());
                 AmazonSNS amazonSNS = AmazonSNSClientBuilder.defaultClient();
                 System.out.println("Getting ARN........");
                  String arn =  amazonSNS.createTopic("password_reset").getTopicArn();
