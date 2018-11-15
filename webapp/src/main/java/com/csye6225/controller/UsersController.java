@@ -98,6 +98,7 @@ public class UsersController {
                         if (BCrypt.checkpw(pwd, u.getPwd())) {
                             this.response = Response.jsonString(LocalDateTime.now().toString());
                             response.getWriter().write(this.response);
+                            return;
                         }
                     }
                 }
@@ -119,8 +120,8 @@ public class UsersController {
         try {
             statsd.incrementCounter("endpoint.reset.http.post");
             response.setContentType("application/json");
-           // Users user = userJpaRespository.findOne(email);
-            if(true)
+           Users userobj = userJpaRespository.findOne(user.getUsername());
+            if(userobj!=null)
             {
                 System.out.println("try - " + user.getUsername());
                 AmazonSNS amazonSNS = AmazonSNSClientBuilder.defaultClient();
@@ -136,6 +137,7 @@ public class UsersController {
             }
             else
             {
+                System.out.println("inside else");
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                 this.response = Response.jsonString("Username/email not present" +user.getUsername());
                 response.getWriter().write(this.response);
