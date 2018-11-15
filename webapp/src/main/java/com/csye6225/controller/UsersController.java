@@ -35,11 +35,15 @@ public class UsersController {
     @Autowired
     private StatsDClient statsd;
 
+    private static int counter=0;
+
     @PostMapping(value = "/register",produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public void register(@RequestBody Users user, HttpServletResponse response) {
         try {
+            counter ++;
             statsd.incrementCounter("endpoint.register.http.post");
+            System.out.println(counter);
             response.setContentType("application/json");
             if(!user.getUsername().matches("^(.+)@(.+)\\.(.+)$")){
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -74,7 +78,9 @@ public class UsersController {
     @ResponseBody
     public void gettime(HttpServletRequest httpRequest, HttpServletResponse response) {
         try {
+            counter++;
             statsd.incrementCounter("endpoint.time.http.get");
+            System.out.println(counter);
             response.setContentType("application/json");
             final String authorization = httpRequest.getHeader("Authorization");
             if (authorization != null && authorization.toLowerCase().startsWith("basic")) {
@@ -92,6 +98,7 @@ public class UsersController {
                         if (BCrypt.checkpw(pwd, u.getPwd())) {
                             this.response = Response.jsonString(LocalDateTime.now().toString());
                             response.getWriter().write(this.response);
+                            return;
                         }
                     }
                 }
@@ -113,8 +120,8 @@ public class UsersController {
         try {
             statsd.incrementCounter("endpoint.reset.http.post");
             response.setContentType("application/json");
-           // Users user = userJpaRespository.findOne(email);
-            if(true)
+           Users userobj = userJpaRespository.findOne(user.getUsername());
+            if(userobj!=null)
             {
                 System.out.println("try - " + user.getUsername());
                 AmazonSNS amazonSNS = AmazonSNSClientBuilder.defaultClient();
@@ -130,8 +137,9 @@ public class UsersController {
             }
             else
             {
+                System.out.println("inside else");
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                this.response = Response.jsonString("Username/email not present" +user.getUsername());
+                this.response = Response.jsonString("Username/email not present " +user.getUsername());
                 response.getWriter().write(this.response);
                 return;
 
