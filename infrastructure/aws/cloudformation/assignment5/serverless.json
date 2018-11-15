@@ -82,7 +82,7 @@
 				},
 				"Code": {
 					"S3Bucket": {"Ref" : "s3Lambdabucket"},
-					"S3Key": "csye6225-lambda.zip"
+					"S3Key": "csye6225-lambda.jar"
 				},
 				"Runtime": "java8",
 				"Timeout": 25,
@@ -117,18 +117,11 @@
 		},
 		"LambdaInvokePermission": {
 			"Type": "AWS::Lambda::Permission",
+			"DependsOn" : "MySNSTopic",
 			"Properties": {
-				"FunctionName": {
-					"Fn::GetAtt": [
-						"Lambda",
-						"Arn"
-					]
-                },
+				"FunctionName": {"Ref" : "Lambda"},
 				"Action": "lambda:InvokeFunction",
-				"Principal": "s3.amazonaws.com",
-				"SourceAccount": {
-					"Ref": "AWS::AccountId"
-				},
+				"Principal": "sns.amazonaws.com",
 				"SourceArn": {
 					"Ref": "MySNSTopic"
 				}
