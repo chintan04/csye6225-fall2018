@@ -35,11 +35,15 @@ public class UsersController {
     @Autowired
     private StatsDClient statsd;
 
+    private static int counter=0;
+
     @PostMapping(value = "/register",produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
     public void register(@RequestBody Users user, HttpServletResponse response) {
         try {
+            counter ++;
             statsd.incrementCounter("endpoint.register.http.post");
+            System.out.println(counter);
             response.setContentType("application/json");
             if(!user.getUsername().matches("^(.+)@(.+)\\.(.+)$")){
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
@@ -74,7 +78,9 @@ public class UsersController {
     @ResponseBody
     public void gettime(HttpServletRequest httpRequest, HttpServletResponse response) {
         try {
+            counter++;
             statsd.incrementCounter("endpoint.time.http.get");
+            System.out.println(counter);
             response.setContentType("application/json");
             final String authorization = httpRequest.getHeader("Authorization");
             if (authorization != null && authorization.toLowerCase().startsWith("basic")) {
