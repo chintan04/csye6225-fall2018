@@ -299,18 +299,6 @@
         }
       }
     },
-    "mySNSTopic":
-		{
-		  "Type" : "AWS::SNS::Topic",
-		  "Properties":
-		  {
-
-		    "TopicName" : "password_reset",
-		    "DisplayName":"password_reset"
-		  }
-
-
-		},
     "myInstanceProfile": {
       "Type": "AWS::IAM::InstanceProfile",
       "Properties": {
