@@ -23,9 +23,9 @@ after_success:
   - mkdir codedeploy_artifact
   - cp infrastructure/aws/codedeploy/*.sh .
   - cp infrastructure/aws/codedeploy/*.yml .
-  - zip -r csye6225-lambda.zip webapp/target/ROOT*.war *.sh *.yml
+  - zip -r csye6225-web-app-${TRAVIS_JOB_NUMBER}.zip webapp/target/ROOT*.war *.sh *.yml
   - ls -al
-  - mv csye6225-lambda.zip codedeploy_artifact/
+  - mv csye6225-web-app-${TRAVIS_JOB_NUMBER}.zip codedeploy_artifact/
   - ls -al
   - pwd
   - cd codedeploy_artifact
@@ -48,7 +48,7 @@ deploy:
   - provider: codedeploy
     access_key_id: $access_key_id
     bucket: $s3_bucket
-    key: csye6225-lambda.zip
+    key: csye6225-web-app-${TRAVIS_JOB_NUMBER}.zip
     bundle_type: zip
     application: $application
     deployment_group: $deployment_group
