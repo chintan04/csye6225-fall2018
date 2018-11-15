@@ -102,7 +102,11 @@
         "ProvisionedThroughput": {
           "ReadCapacityUnits": 5,
           "WriteCapacityUnits": 5
-        }
+        },
+        "TimeToLiveSpecification": {
+					"AttributeName": "ttl",
+    			"Enabled": "TRUE"
+				}
       }
     },
     "myRDSInstance": {
@@ -247,10 +251,48 @@
                 "echo '[Install]' >> tomcat.service",
                 "echo 'WantedBy=multi-user.target' >> tomcat.service",
                 "systemctl daemon-reload",
-                "#systemctl start cloudwatch.service",
-                "#systemctl enable cloudwatch.service",
                 "systemctl enable tomcat.service",
-                "systemctl start tomcat.service"
+                "systemctl start tomcat.service",
+                "wget https://s3.amazonaws.com/amazoncloudwatch-agent/centos/amd64/latest/amazon-cloudwatch-agent.rpm",
+                "rpm -U ./amazon-cloudwatch-agent.rpm",
+                "cd /opt/aws/amazon-cloudwatch-agent/etc",
+                "touch cloudwatch-config.json",
+                "echo '{\"agent\":{' >> cloudwatch-config.json",
+                "echo '\"metrics_collection_interval\":10,' >> cloudwatch-config.json",
+                "echo '\"logfile\": \"/var/logs/amazon-cloudwatch-agent.log\"' >> cloudwatch-config.json",
+                "echo '},' >> cloudwatch-config.json",
+                "echo '\"logs\": {' >> cloudwatch-config.json",
+                "echo '\"logs_collected\": {' >> cloudwatch-config.json", 
+                "echo '\"files\": {' >> cloudwatch-config.json",
+                "echo '\"collect_list\": [' >> cloudwatch-config.json", 
+                "echo '{\"file_path\": \"/opt/tomcat/logs/catalina.out\",' >> cloudwatch-config.json",
+                "echo '\"log_group_name\": \"csye6225_fall2018\",' >> cloudwatch-config.json",
+                "echo '\"log_stream_name\": \"webapp\",' >> cloudwatch-config.json",
+                "echo '\"timestamp_format\": \"%H:%M:%S %y %b %-d\"' >> cloudwatch-config.json",
+                "echo '} ] } },' >> cloudwatch-config.json",
+                "echo '\"log_stream_name\": \"cloudwatch_log_stream\"' >> cloudwatch-config.json",
+                "echo '},' >> cloudwatch-config.json",
+                "echo '\"metrics\":{' >> cloudwatch-config.json",
+                "echo '\"metrics_collected\":{' >> cloudwatch-config.json",
+                "echo '\"statsd\":{' >> cloudwatch-config.json",
+                "echo '\"service_address\":\":8125\",' >> cloudwatch-config.json",
+                "echo '\"metrics_collection_interval\":10,' >> cloudwatch-config.json",
+                "echo '\"metrics_aggregation_interval\":0' >> cloudwatch-config.json",
+                "echo '}}}}' >> cloudwatch-config.json",
+                "touch /tmp/awslogs.conf",
+                "echo '[general]' > /tmp/awslogs.conf",
+                "echo 'state_file= /var/awslogs/agent-state' >> /tmp/awslogs.conf",
+                "echo '[logstream1]' >> /tmp/awslogs.conf",
+                "echo 'file = /opt/tomcat/logs/catalina.out' >> /tmp/awslogs.conf",
+                "echo 'log_group_name = csye6225_fall2018' >> /tmp/awslogs.conf",
+                "echo 'log_stream_name = webapp' >> /tmp/awslogs.conf",
+                "echo 'datetime_format = %d/%b/%Y:%H:%M:%S' >> /tmp/awslogs.conf",
+                "sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/cloudwatch-config.json -s",
+                "wget https://s3.amazonaws.com/configfileforcloudwatch/amazon-cloudwatch-agent.service",
+                "cp amazon-cloudwatch-agent.service /usr/lib/systemd/system/",
+                "systemctl enable amazon-cloudwatch-agent.service",
+                "systemctl start amazon-cloudwatch-agent.service",
+                "service codedeploy-agent start"
               ]
             ]
           }

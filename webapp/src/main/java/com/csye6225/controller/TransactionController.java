@@ -8,6 +8,8 @@ import com.csye6225.repository.TransactionJpaRepository;
 import com.csye6225.repository.UserJpaRespository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.util.JSONWrappedObject;
+import com.timgroup.statsd.NonBlockingStatsDClient;
+import com.timgroup.statsd.StatsDClient;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.bcrypt.BCrypt;
@@ -34,11 +36,15 @@ public class TransactionController {
 
     private String response = null;
 
+    @Autowired
+    private StatsDClient statsd;
+
 
     @GetMapping
     @ResponseBody
     public void getTransaction(HttpServletRequest request, HttpServletResponse response) {
         try {
+            statsd.incrementCounter("endpoint.transaction.http.get");
             response.setContentType("application/json");
             String username = AuthFilter.authorizeUser(request, userJpaRespository);
             List<Transaction> transactionListtemp = new ArrayList<Transaction>(transactionJpaRepository.findAll());
@@ -68,6 +74,7 @@ public class TransactionController {
     @ResponseBody
     public void createTransaction(@RequestBody Transaction transaction, HttpServletRequest request, HttpServletResponse response) {
         try {
+            statsd.incrementCounter("endpoint.transaction.http.post");
             response.setContentType("application/json");
             String username = AuthFilter.authorizeUser(request, userJpaRespository);
             List<Users> userlist = userJpaRespository.findAll();
@@ -107,6 +114,7 @@ public class TransactionController {
     @ResponseBody
     public void updateTransaction(@RequestBody Transaction transaction, HttpServletRequest request, @PathVariable UUID id, HttpServletResponse response) {
         try {
+            statsd.incrementCounter("endpoint.transaction.http.put");
             response.setContentType("application/json");
             String username = AuthFilter.authorizeUser(request, userJpaRespository);
             if (username != null) {
@@ -160,6 +168,7 @@ public class TransactionController {
     @ResponseBody
     public void deleteTransaction(@PathVariable UUID id, HttpServletRequest request, HttpServletResponse response) {
         try {
+            statsd.incrementCounter("endpoint.transaction.http.delete");
             response.setContentType("application/json");
             String username = AuthFilter.authorizeUser(request, userJpaRespository);
             if (username != null) {
