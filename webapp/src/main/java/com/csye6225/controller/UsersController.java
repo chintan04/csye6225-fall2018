@@ -139,7 +139,7 @@ public class UsersController {
             {
                 System.out.println("inside else");
                 response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-                this.response = Response.jsonString("Username/email not present" +user.getUsername());
+                this.response = Response.jsonString("Username/email not present " +user.getUsername());
                 response.getWriter().write(this.response);
                 return;
 
