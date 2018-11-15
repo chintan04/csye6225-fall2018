@@ -65,7 +65,8 @@
 				"Path": "/",
 				"ManagedPolicyArns": [
 					"arn:aws:iam::aws:policy/service-role/AWSCodeDeployRoleForLambda",
-					"arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess", "arn:aws:iam::aws:policy/AmazonSESFullAccess"
+					"arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess", "arn:aws:iam::aws:policy/AmazonSESFullAccess",
+					"arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole", "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
 				]
 			}
 		},
@@ -92,7 +93,11 @@
 					]
 				},
 				"Path": "/",
-				"ManagedPolicyArns":["arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy", "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM","arn:aws:iam::aws:policy/CloudWatchAgentAdminPolicy"],
+				"ManagedPolicyArns":[
+					"arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy",
+					"arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM",
+					"arn:aws:iam::aws:policy/CloudWatchAgentAdminPolicy"
+				],
 				"Policies": [
 					{
 						"PolicyName": "CodeDeploy-EC2-S3",
