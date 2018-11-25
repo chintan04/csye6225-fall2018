@@ -18,8 +18,8 @@
           <boolProp name="LoopController.continue_forever">false</boolProp>
           <stringProp name="LoopController.loops">1</stringProp>
         </elementProp>
-        <stringProp name="ThreadGroup.num_threads">10000</stringProp>
-        <stringProp name="ThreadGroup.ramp_time">10</stringProp>
+        <stringProp name="ThreadGroup.num_threads">100</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">30</stringProp>
         <boolProp name="ThreadGroup.scheduler">false</boolProp>
         <stringProp name="ThreadGroup.duration"></stringProp>
         <stringProp name="ThreadGroup.delay"></stringProp>
@@ -28,7 +28,7 @@
         <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="CSV Data Set Config" enabled="true">
           <stringProp name="delimiter">,</stringProp>
           <stringProp name="fileEncoding">UTF-8</stringProp>
-          <stringProp name="filename">/home/chintan04/Downloads/test_dataset.csv</stringProp>
+          <stringProp name="filename">/home/anigam/Downloads/test_dataset.csv</stringProp>
           <boolProp name="ignoreFirstLine">true</boolProp>
           <boolProp name="quotedData">false</boolProp>
           <boolProp name="recycle">true</boolProp>
@@ -52,7 +52,7 @@
               </elementProp>
             </collectionProp>
           </elementProp>
-          <stringProp name="HTTPSampler.domain">csye6225-fall2018-gaikawads.me</stringProp>
+          <stringProp name="HTTPSampler.domain">csye6225-fall2018-nigama.me</stringProp>
           <stringProp name="HTTPSampler.port"></stringProp>
           <stringProp name="HTTPSampler.protocol">https</stringProp>
           <stringProp name="HTTPSampler.contentEncoding"></stringProp>
@@ -94,7 +94,7 @@
               </elementProp>
             </collectionProp>
           </elementProp>
-          <stringProp name="HTTPSampler.domain">csye6225-fall2018-gaikawads.me</stringProp>
+          <stringProp name="HTTPSampler.domain">csye6225-fall2018-nigama.me</stringProp>
           <stringProp name="HTTPSampler.port"></stringProp>
           <stringProp name="HTTPSampler.protocol">https</stringProp>
           <stringProp name="HTTPSampler.contentEncoding"></stringProp>
@@ -119,7 +119,7 @@
           </HeaderManager>
           <hashTree/>
           <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="CSV Data Set Config" enabled="true">
-            <stringProp name="filename">/home/chintan04/Cloud/test.csv</stringProp>
+            <stringProp name="filename">/home/anigam/Downloads/test_dataset.csv</stringProp>
             <stringProp name="fileEncoding">UTF-8</stringProp>
             <stringProp name="variableNames">username,pwd</stringProp>
             <boolProp name="ignoreFirstLine">true</boolProp>
@@ -133,7 +133,7 @@
           <AuthManager guiclass="AuthPanel" testclass="AuthManager" testname="HTTP Authorization Manager" enabled="true">
             <collectionProp name="AuthManager.auth_list">
               <elementProp name="" elementType="Authorization">
-                <stringProp name="Authorization.url">http://localhost:8080/transaction</stringProp>
+                <stringProp name="Authorization.url">https://csye6225-fall2018-nigama.me/transaction</stringProp>
                 <stringProp name="Authorization.username">${username}</stringProp>
                 <stringProp name="Authorization.password">${pwd}</stringProp>
                 <stringProp name="Authorization.domain"></stringProp>
@@ -153,8 +153,8 @@
         <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="HTTP Request" enabled="true">
           <elementProp name="HTTPsampler.Files" elementType="HTTPFileArgs">
             <collectionProp name="HTTPFileArgs.files">
-              <elementProp name="/home/chintan04/Downloads/abc.jpg" elementType="HTTPFileArg">
-                <stringProp name="File.path">/home/chintan04/Downloads/abc.jpg</stringProp>
+              <elementProp name="/home/anigam/Pictures/flower.jpeg" elementType="HTTPFileArg">
+                <stringProp name="File.path">/home/anigam/Pictures/flower.jpeg</stringProp>
                 <stringProp name="File.paramname">file</stringProp>
                 <stringProp name="File.mimetype">jpg</stringProp>
               </elementProp>
@@ -163,7 +163,7 @@
           <elementProp name="HTTPsampler.Arguments" elementType="Arguments" guiclass="HTTPArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
             <collectionProp name="Arguments.arguments"/>
           </elementProp>
-          <stringProp name="HTTPSampler.domain">csye6225-fall2018-gaikawads.me</stringProp>
+          <stringProp name="HTTPSampler.domain">csye6225-fall2018-nigama.me</stringProp>
           <stringProp name="HTTPSampler.port"></stringProp>
           <stringProp name="HTTPSampler.protocol">https</stringProp>
           <stringProp name="HTTPSampler.contentEncoding"></stringProp>
@@ -181,7 +181,7 @@
           <AuthManager guiclass="AuthPanel" testclass="AuthManager" testname="HTTP Authorization Manager" enabled="true">
             <collectionProp name="AuthManager.auth_list">
               <elementProp name="" elementType="Authorization">
-                <stringProp name="Authorization.url">http://localhost:8080/transaction</stringProp>
+                <stringProp name="Authorization.url">https://csye6225-fall2018-nigama.me/transaction/${tid}/attachments</stringProp>
                 <stringProp name="Authorization.username">${username}</stringProp>
                 <stringProp name="Authorization.password">${pwd}</stringProp>
                 <stringProp name="Authorization.domain"></stringProp>
