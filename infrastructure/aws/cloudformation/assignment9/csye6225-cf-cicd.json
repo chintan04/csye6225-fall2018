@@ -1,0 +1,317 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+	"Description": "AWS CICD Template",
+	"Parameters": {
+		"s3CodeDeploybucket": {
+			"Type": "String",
+			"Description": "S3 CodeDeploy bucket"
+		},
+		"s3Attachmentbucket": {
+			"Type": "String",
+			"Description": "S3 Attachment bucket"
+		}
+	},
+	"Resources":
+	{
+		"myCodeDeployServiceRole":
+		{
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"RoleName": "CodeDeployServiceRole",
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": [
+									"codedeploy.amazonaws.com"
+								]
+							},
+							"Action": [
+								"sts:AssumeRole"
+							]
+						}
+					]
+				},
+				"Path": "/",
+				"ManagedPolicyArns": [
+					"arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole"
+				]
+			}
+		},
+
+		"myEC2Role":
+		{
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"RoleName": "CodeDeployEC2ServiceRole",
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": [
+									"ec2.amazonaws.com"
+								]
+							},
+							"Action": [
+								"sts:AssumeRole"
+							]
+						}
+					]
+				},
+				"Path": "/",
+				"ManagedPolicyArns":[
+					"arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy",
+					"arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM",
+					"arn:aws:iam::aws:policy/CloudWatchAgentAdminPolicy"
+				],
+				"Policies": [
+					{
+						"PolicyName": "CodeDeploy-EC2-S3",
+						"PolicyDocument": {
+							"Version": "2012-10-17",
+							"Statement": [
+								{
+									"Effect": "Allow",
+									"Action": "*",
+									"Resource": "*"
+								}
+							]
+						}
+					}
+				]
+			}
+		},
+
+		"codeDeployS3Bucket": {
+			"Type": "AWS::S3::Bucket",
+			"Properties": {
+				"BucketName": {
+					"Ref": "s3CodeDeploybucket"
+				}
+			}
+		},
+
+		"myCodeDeployEC2S3Policy": {
+			"Type": "AWS::IAM::ManagedPolicy",
+			"Properties": {
+				"Description": "Get data from S3 buckets",
+				"ManagedPolicyName": "CodeDeploy-EC2-S3",
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Action": [
+								"s3:Get*",
+								"s3:List*"
+							],
+							"Effect": "Allow",
+							"Resource": {
+								"Fn::Join": [
+									"",
+									[
+										"arn:aws:s3:::",
+										{
+											"Ref": "s3CodeDeploybucket"
+										}
+									]
+								]
+							}
+						}
+					]
+				},
+				"Roles": [
+					"CodeDeployEC2ServiceRole"
+				]
+			}
+		},
+
+		"myEC2S3AccessPolicy": {
+			"Type": "AWS::IAM::ManagedPolicy",
+			"Properties": {
+				"Description": "Put data in S3 buckets",
+				"ManagedPolicyName": "EC2-S3-Access",
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Action": [
+								"s3:Get*",
+								"s3:List*",
+								"s3:Put*",
+								"s3:Delete*"
+							],
+							"Effect": "Allow",
+							"Resource": {
+								"Fn::Join": [
+									"",
+									[
+										"arn:aws:s3:::",
+										{
+											"Ref": "s3Attachmentbucket"
+										}
+									]
+								]
+							}
+						}
+					]
+				},
+				"Roles": ["CodeDeployEC2ServiceRole"]
+			}
+		},
+
+		"myTravistoS3Policy": {
+			"Type": "AWS::IAM::ManagedPolicy",
+			"Properties": {
+				"ManagedPolicyName": "Travis-Upload-To-S3",
+				"Description": "Allow TravisCI to upload to S3",
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": [
+								"s3:PutObject"
+							],
+							"Resource": [
+								{
+									"Fn::Join": [
+										":",
+										[
+											"arn:aws:s3:::",
+											{
+												"Ref": "s3CodeDeploybucket"
+											}
+										]
+									]
+								}
+							]
+						}
+					]
+				},
+				"Users": [
+					"travis"
+				]
+			}
+		},
+
+		"myTravistoCodeDeloyPolicy": {
+			"Type": "AWS::IAM::ManagedPolicy",
+			"Properties": {
+				"ManagedPolicyName": "Travis-Code-Deploy",
+				"Description": "Allows TravisCI to call CodeDeploy APIs",
+				"PolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Action": [
+								"codedeploy:RegisterApplicationRevision",
+								"codedeploy:GetApplicationRevision"
+							],
+							"Resource": [
+								{
+									"Fn::Join": [
+										":",
+										[
+											"arn:aws:codedeploy:us-east-1",
+											{
+												"Ref": "AWS::AccountId"
+											},
+											"application:csye6225-fall2018"
+										]
+									]
+								}
+							]
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"codedeploy:CreateDeployment",
+								"codedeploy:GetDeployment"
+							],
+							"Resource": [
+								"*"
+							]
+						},
+						{
+							"Effect": "Allow",
+							"Action": [
+								"codedeploy:GetDeploymentConfig"
+							],
+							"Resource": [
+								{
+									"Fn::Join": [
+										":",
+										[
+											"arn:aws:codedeploy:us-east-1",
+											{
+												"Ref": "AWS::AccountId"
+											},
+											"deploymentconfig:CodeDeployDefault.OneAtATime"
+										]
+									]
+								},
+								{
+									"Fn::Join": [
+										":",
+										[
+											"arn:aws:codedeploy:us-east-1",
+											{
+												"Ref": "AWS::AccountId"
+											},
+											"deploymentconfig:CodeDeployDefault.HalfAtATime"
+										]
+									]
+								},
+								{
+									"Fn::Join": [
+										":",
+										[
+											"arn:aws:codedeploy:us-east-1",
+											{
+												"Ref": "AWS::AccountId"
+											},
+											"deploymentconfig:CodeDeployDefault.AllAtOnce"
+										]
+									]
+								}
+							]
+						}
+					]
+				},
+				"Users": [
+					"travis"
+				],
+				"Roles": ["CodeDeployServiceRole"]
+			}
+		}
+	},
+	
+	"Outputs": {
+		"EC2IAMRole": {
+			"Description": "EC2 IAM role",
+			"Value": {
+				"Ref": "myEC2Role"
+			},
+			"Export": {
+				"Name": "ec2iamrole"
+			}
+		},
+		"myCodeDeployRole": {
+			"Description": "Code Deploy Arn",
+			"Value": {
+				"Fn::GetAtt": [
+					"myCodeDeployServiceRole",
+					"Arn"
+				]
+			},
+			"Export": {
+				"Name": "codedeployarn"
+			}
+		}
+	}
+}
