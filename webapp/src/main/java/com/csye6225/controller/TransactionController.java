@@ -77,6 +77,7 @@ public class TransactionController {
             statsd.incrementCounter("endpoint.transaction.http.post");
             response.setContentType("application/json");
             String username = AuthFilter.authorizeUser(request, userJpaRespository);
+            System.out.println("username createTransaction- "+username);
             List<Users> userlist = userJpaRespository.findAll();
             if (username != null) {
                 if (transaction.getAmount().equals("") || transaction.getCategory().equals("") ||
@@ -96,12 +97,12 @@ public class TransactionController {
                     }
                     transactionJpaRepository.save(transaction);
                     response.setStatus(HttpServletResponse.SC_CREATED);
-                    this.response = Response.jsonString("Transaction Created with uid " +u1.toString());
+                    this.response = Response.jsonString(u1.toString());
                     response.getWriter().write(this.response);
                 }
             } else {
                 response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                this.response = Response.jsonString("UnAuthorized");
+                this.response = Response.jsonString("UnAuthorized - "+username);
                 response.getWriter().write(this.response);
             }
         } catch (Exception ex) {

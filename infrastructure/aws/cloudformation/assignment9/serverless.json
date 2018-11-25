@@ -1,0 +1,131 @@
+{
+	"AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "AWS Serverless Template.",
+    "Parameters": {
+		"s3Lambdabucket": {
+			"Type": "String",
+			"Description": "S3 Lambda bucket"
+		}
+	},
+	"Resources": {
+        "myCodeDeployLambdaServiceRole":
+		{
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"RoleName": "CodeDeployLambdaServiceRole",
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Sid": "",
+							"Effect": "Allow",
+							"Principal": {
+								"Service": [
+									"codedeploy.amazonaws.com"
+								]
+							},
+							"Action": [
+								"sts:AssumeRole"
+							]
+						}
+					]
+				},
+				"Path": "/",
+				"ManagedPolicyArns": [
+					"arn:aws:iam::aws:policy/service-role/AWSCodeDeployRoleForLambda"
+				]
+			}
+        },
+        
+		"myLambdaRole": {
+			"Type": "AWS::IAM::Role",
+			"Properties": {
+				"RoleName": "myLambdaRole",
+				"AssumeRolePolicyDocument": {
+					"Version": "2012-10-17",
+					"Statement": [
+						{
+							"Effect": "Allow",
+							"Principal": {
+								"Service": [
+									"lambda.amazonaws.com"
+								]
+							},
+							"Action": [
+								"sts:AssumeRole"
+							]
+						}
+					]
+				},
+				"Path": "/",
+				"ManagedPolicyArns": [
+					"arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess",
+                    "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+                    "arn:aws:iam::aws:policy/AmazonSESFullAccess",
+					"arn:aws:iam::aws:policy/service-role/AWSCodeDeployRoleForLambda",
+					"arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy",
+					"arn:aws:iam::aws:policy/AWSXrayFullAccess"
+				]
+			}
+		},
+		"Lambda": {
+			"Type": "AWS::Lambda::Function",
+			"Properties": {
+				"FunctionName": "AWSLambda",
+				"MemorySize" : "512",
+				"Handler": "com.lambda.FaaS::handleRequest",
+				"Role": {
+					"Fn::GetAtt": [
+						"myLambdaRole",
+						"Arn"
+					]
+				},
+				"Code": {
+					"S3Bucket": {"Ref" : "s3Lambdabucket"},
+					"S3Key": "csye6225-lambda.jar"
+				},
+				"Runtime": "java8",
+				"Timeout": 25,
+				"TracingConfig": {
+					"Mode": "Active"
+				}
+			}
+		},
+		"myCodedeployLambdaApp": {
+			"Type": "AWS::CodeDeploy::Application",
+			"Properties": {
+				"ApplicationName": "AWSLambda",
+				"ComputePlatform": "Lambda"
+			}
+		},
+		"MySNSTopic": {
+			"Type": "AWS::SNS::Topic",
+			"Properties": {
+				"Subscription": [
+					{
+						"Endpoint": {
+							"Fn::GetAtt": [
+								"Lambda",
+								"Arn"
+							]
+						},
+						"Protocol": "lambda"
+					}
+				],
+				"TopicName": "password_reset"
+			}
+		},
+		"LambdaInvokePermission": {
+			"Type": "AWS::Lambda::Permission",
+			"DependsOn" : "MySNSTopic",
+			"Properties": {
+				"FunctionName": {"Ref" : "Lambda"},
+				"Action": "lambda:InvokeFunction",
+				"Principal": "sns.amazonaws.com",
+				"SourceArn": {
+					"Ref": "MySNSTopic"
+				}
+			}
+		}
+	}
+}
