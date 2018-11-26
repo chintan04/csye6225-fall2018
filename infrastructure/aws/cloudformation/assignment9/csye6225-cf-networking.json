@@ -252,14 +252,25 @@
               "Name": "csye6225vpcid"
             }
             },
-      "subnetPublic1": {
-            "Description": "Public subnet",
-            "Value": {
-              "Ref": "subnetF"
+            "webServer1": {
+              "Description": "Webserver subnet 1",
+              "Value": { "Ref": "subnetB"},
+              "Export": { "Name": "webServer1" }
             },
-            "Export": {
-              "Name": "csye6225subid"
-            }
+            "webServer2": {
+              "Description": "Webserver subnet 2",
+              "Value": { "Ref": "subnetD" },
+              "Export": { "Name": "webServer2" }
+            },
+      "elbSubnet1": {
+            "Description": "ELB Subnet 1",
+            "Value": { "Ref": "subnetF"},
+            "Export": {"Name": "elbSubnet1"}
+          },
+      "elbSubnet2": {
+            "Description": "ELB Subnet 2",
+            "Value": { "Ref": "subnetA"},
+            "Export": {"Name": "elbSubnet2"}
           },
       "dbsubnet1ID" : {
             "Description" : "Availability Zone 1 of the DB server",
