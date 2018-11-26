@@ -1,0 +1,6 @@
+[
+    {
+        "ParameterValue": "csye6225-fall2018-gaikawads.lambda",
+        "ParameterKey": "s3Lambdabucket"
+    }
+]

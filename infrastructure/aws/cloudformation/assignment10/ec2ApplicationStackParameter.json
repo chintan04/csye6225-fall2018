@@ -1,0 +1,18 @@
+[
+                {
+                    "ParameterValue": "MyEC2KeyPair", 
+                    "ParameterKey": "EC2Key"
+                }, 
+                {
+                    "ParameterValue": "csye6225-fall2018-gaikawads.me.csye6225.com", 
+                    "ParameterKey": "s3AppBucket"
+                },
+                {
+                    "ParameterKey":"CertificateArn",
+                    "ParameterValue":"arn:aws:acm:us-east-1:501702557048:certificate/02e9cb91-bb10-4207-90e3-e1e6f67ffdd0"
+                },
+                {
+                    "ParameterKey":"hostedZone",
+                    "ParameterValue":"csye6225-fall2018-gaikawads.me."
+                }
+            ]
