@@ -1,0 +1,1071 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "AWS CloudFormation Template",
+
+  "Metadata": {
+    "AWS::CloudFormation::Interface": {
+      "ParameterGroups": [{
+        "Label": {
+          "default": "Protection List"
+        },
+        "Parameters": ["SqlInjectionProtectionParam", "CrossSiteScriptingProtectionParam", "ActivateHttpFloodProtectionParam", "ActivateScansProbesProtectionParam", "ActivateReputationListsProtectionParam", "ActivateBadBotProtectionParam"]
+      }, {
+        "Label": {
+          "default": "Settings"
+        },
+        "Parameters": ["AccessLogBucket"]
+      }, {
+        "Label": {
+          "default": "Advanced Settings"
+        },
+        "Parameters": ["RequestThreshold", "ErrorThreshold", "WAFBlockPeriod"]
+      }, {
+        "Label": {
+          "default": "Anonymous Metrics Request"
+        },
+        "Parameters": ["SendAnonymousUsageData"]
+      }],
+      "ParameterLabels": {
+        "SqlInjectionProtectionParam": {
+          "default": "Activate SQL Injection Protection"
+        },
+        "CrossSiteScriptingProtectionParam": {
+          "default": "Activate Cross-site Scripting Protection"
+        },
+        "ActivateHttpFloodProtectionParam": {
+          "default": "Activate HTTP Flood Protection"
+        },
+        "ActivateScansProbesProtectionParam": {
+          "default": "Activate Scanner & Probe Protection"
+        },
+        "ActivateReputationListsProtectionParam": {
+          "default": "Activate Reputation List Protection"
+        },
+        "ActivateBadBotProtectionParam": {
+          "default": "Activate Bad Bot Protection"
+        },
+        "AccessLogBucket": {
+          "default": "ALB Access Log Bucket Name"
+        },
+        "SendAnonymousUsageData": {
+          "default": "Send Anonymous Usage Data"
+        },
+        "RequestThreshold": {
+          "default": "Request Threshold"
+        },
+        "ErrorThreshold": {
+          "default": "Error Threshold"
+        },
+        "WAFBlockPeriod": {
+          "default": "WAF Block Period"
+        }
+      }
+    }
+  },
+
+
+  "Parameters": {
+    "s3AppBucket": {
+      "Type": "String",
+      "Description": "S3 Bucket to store the attachments"
+    },
+    "EC2Key": {
+      "Type": "String",
+      "Description": "Include existing keypair"
+    },
+    "CertificateArn":{
+      "Type":"String"
+    },
+    "hostedZone":{"Type" : "String"},
+
+    "SqlInjectionProtectionParam": {
+      "Type": "String",
+      "Default": "yes",
+      "AllowedValues": ["yes", "no"],
+      "Description": "Choose yes to enable the component designed to block common SQL injection attacks."
+    },
+    "CrossSiteScriptingProtectionParam": {
+      "Type": "String",
+      "Default": "yes",
+      "AllowedValues": ["yes", "no"],
+      "Description": "Choose yes to enable the component designed to block common XSS attacks."
+    },
+    "ActivateHttpFloodProtectionParam": {
+      "Type": "String",
+      "Default": "yes",
+      "AllowedValues": ["yes", "no"],
+      "Description": "Choose yes to enable the component designed to block HTTP flood attacks."
+    },
+    "ActivateScansProbesProtectionParam": {
+      "Type": "String",
+      "Default": "yes",
+      "AllowedValues": ["yes", "no"],
+      "Description": "Choose yes to enable the component designed to block scanners and probes."
+    },
+    "ActivateReputationListsProtectionParam": {
+      "Type": "String",
+      "Default": "yes",
+      "AllowedValues": ["yes", "no"],
+      "Description": "Choose yes to block requests from IP addresses on third-party reputation lists (supported lists: spamhaus, torproject, and emergingthreats)."
+    },
+    "ActivateBadBotProtectionParam": {
+      "Type": "String",
+      "Default": "yes",
+      "AllowedValues": ["yes", "no"],
+      "Description": "Choose yes to enable the component designed to block bad bots and content scrapers."
+    },
+    "AccessLogBucket": {
+      "Type": "String",
+      "Default": "",
+      "AllowedPattern": "(^$|^([a-z]|(\\d(?!\\d{0,2}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})))([a-z\\d]|(\\.(?!(\\.|-)))|(-(?!\\.))){1,61}[a-z\\d]$)",
+      "Description": "Enter a name for the Amazon S3 bucket where you want to store Amazon ALB access logs. This can be the name of either an existing S3 bucket, or a new bucket that the template will create during stack launch (if it does not find a matching bucket name). The solution will modify the bucket’s notification configuration to trigger the Log Parser AWS Lambda function whenever a new log file is saved in this bucket. More about bucket name restriction here: http://amzn.to/1p1YlU5"
+    },
+    "SendAnonymousUsageData": {
+      "Type": "String",
+      "Default": "yes",
+      "AllowedValues": ["yes", "no"],
+      "Description": "Send anonymous data to AWS to help us understand solution usage across our customer base as a whole. To opt out of this feature, select No."
+    },
+    "RequestThreshold": {
+      "Type": "Number",
+      "Default": "2000",
+      "MinValue": "2000",
+      "Description": "If you chose yes for the Activate HTTP Flood Protection parameter, enter the maximum acceptable requests per FIVE-minute period per IP address. Minimum value of 2000. If you chose to deactivate this protection, ignore this parameter."
+    },
+    "ErrorThreshold": {
+      "Type": "Number",
+      "Default": "50",
+      "MinValue": "0",
+      "Description": "If you chose yes for the Activate Scanners & Probes Protection parameter, enter the maximum acceptable bad requests per minute per IP. If you chose to deactivate Scanners & Probes protection, ignore this parameter."
+    },
+    "WAFBlockPeriod": {
+      "Type": "Number",
+      "Default": "240",
+      "MinValue": "0",
+      "Description": "If you chose yes for the Activate Scanners & Probes Protection parameters, enter the period (in minutes) to block applicable IP addresses. If you chose to deactivate this protection, ignore this parameter."
+    }
+
+  },
+
+"Conditions": {
+    "SqlInjectionProtectionActivated": {
+      "Fn::Equals": [{
+        "Ref": "SqlInjectionProtectionParam"
+      }, "yes"]
+    },
+    "CrossSiteScriptingProtectionActivated": {
+      "Fn::Equals": [{
+        "Ref": "CrossSiteScriptingProtectionParam"
+      }, "yes"]
+    },
+    "HttpFloodProtectionActivated": {
+      "Fn::Equals": [{
+        "Ref": "ActivateHttpFloodProtectionParam"
+      }, "yes"]
+    },
+    "ScansProbesProtectionActivated": {
+      "Fn::Equals": [{
+        "Ref": "ActivateScansProbesProtectionParam"
+      }, "yes"]
+    },
+    "ReputationListsProtectionActivated": {
+      "Fn::Equals": [{
+        "Ref": "ActivateReputationListsProtectionParam"
+      }, "yes"]
+    },
+    "BadBotProtectionActivated": {
+      "Fn::Equals": [{
+        "Ref": "ActivateBadBotProtectionParam"
+      }, "yes"]
+    },
+    "LogParserActivated": {
+      "Fn::Equals": [{
+        "Ref": "ActivateScansProbesProtectionParam"
+      }, "yes"]
+    },
+    "CreateWebACL": {
+      "Fn::Or": [{
+        "Condition": "SqlInjectionProtectionActivated"
+      }, {
+        "Condition": "CrossSiteScriptingProtectionActivated"
+      }, {
+        "Condition": "HttpFloodProtectionActivated"
+      }, {
+        "Condition": "ScansProbesProtectionActivated"
+      }, {
+        "Condition": "ReputationListsProtectionActivated"
+      }, {
+        "Condition": "BadBotProtectionActivated"
+      }]
+    }
+  },
+
+  "Resources": {
+    "webserverSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupName": "WebServer",
+        "GroupDescription": "Security group for EC2 instance Web server",
+        "VpcId": {
+          "Fn::ImportValue": "csye6225vpcid"
+        },
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "csye6225-webapp"
+          }
+        ],
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "22",
+            "ToPort": "22",
+            "CidrIp": "0.0.0.0/0"
+          },
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "8080",
+            "ToPort": "8080",
+            "SourceSecurityGroupId": {
+              "Ref":"elbSecurityGroup"
+           }
+          }
+        ]
+      }
+    },
+
+		"myAutoScalingGroup" : {
+      "Type" : "AWS::AutoScaling::AutoScalingGroup",
+      "Properties" : {
+        "VPCZoneIdentifier" : [{"Fn::ImportValue": "webServer1"},{"Fn::ImportValue": "webServer2"}],
+        "LaunchConfigurationName" : { "Ref" : "asgLaunchConfig" },
+        "MinSize" : "3",
+        "MaxSize" : "10",
+				"Cooldown": "60",
+				"DesiredCapacity" : "3",
+				"TargetGroupARNs":[{"Ref":"myTargetGroup"}],
+				"Tags":[{"Key" : "Name", "Value" : "prod-ec2", "PropagateAtLaunch" : "true"},{"Key" : "EC2tagKey","Value" : "EC2tagValue","PropagateAtLaunch" : "true"}]
+        }
+      },
+      "WebServerScaleUpPolicy": {
+        "Type": "AWS::AutoScaling::ScalingPolicy",
+        "Properties": {
+          "AdjustmentType": "ChangeInCapacity",
+          "AutoScalingGroupName": {
+            "Ref": "myAutoScalingGroup"
+          },
+          "Cooldown": "60",
+          "ScalingAdjustment": "1"
+        }
+      },
+      "WebServerScaleDownPolicy": {
+        "Type": "AWS::AutoScaling::ScalingPolicy",
+        "Properties": {
+          "AdjustmentType": "ChangeInCapacity",
+          "AutoScalingGroupName": {
+            "Ref": "myAutoScalingGroup"
+          },
+          "Cooldown": "60",
+          "ScalingAdjustment": "-1"
+        }
+      },
+      "CPUAlarmHigh": {
+        "Type": "AWS::CloudWatch::Alarm",
+        "Properties": {
+          "AlarmDescription": "Scale-up if CPU > 90% for 10 minutes",
+          "MetricName": "CPUUtilization",
+          "Namespace": "AWS/EC2",
+          "Statistic": "Average",
+          "Period": "300",
+          "EvaluationPeriods": "2",
+          "Threshold": "90",
+          "AlarmActions": [
+            {
+              "Ref": "WebServerScaleUpPolicy"
+            }
+          ],
+          "Dimensions": [
+            {
+              "Name": "AutoScalingGroupName",
+              "Value": {
+                "Ref": "myAutoScalingGroup"
+              }
+            }
+          ],
+          "ComparisonOperator": "GreaterThanThreshold"
+        }
+      },
+      "CPUAlarmLow": {
+        "Type": "AWS::CloudWatch::Alarm",
+        "Properties": {
+          "AlarmDescription": "Scale-down if CPU < 70% for 10 minutes",
+          "MetricName": "CPUUtilization",
+          "Namespace": "AWS/EC2",
+          "Statistic": "Average",
+          "Period": "300",
+          "EvaluationPeriods": "2",
+          "Threshold": "70",
+          "AlarmActions": [
+            {
+              "Ref": "WebServerScaleDownPolicy"
+            }
+          ],
+          "Dimensions": [
+            {
+              "Name": "AutoScalingGroupName",
+              "Value": {
+                "Ref": "myAutoScalingGroup"
+              }
+            }
+          ],
+          "ComparisonOperator": "LessThanThreshold"
+        }
+      },
+    "asgLaunchConfig":{
+			"Type": "AWS::AutoScaling::LaunchConfiguration",
+			"Properties": {
+				"ImageId": "ami-9887c6e7",
+				"InstanceType": "t2.micro",
+				"IamInstanceProfile": {
+					"Ref": "myInstanceProfile"
+				},
+				"KeyName": {
+          "Ref": "EC2Key"
+        },
+				"AssociatePublicIpAddress": true,
+        "SecurityGroups": [{"Ref" : "elbSecurityGroup"}],
+        "UserData": {
+          "Fn::Base64": {
+            "Fn::Join": [
+              "\n",
+              [
+                "#!/bin/bash -xe ",
+                "sudo su",
+                "yum update -y",
+                "yum install ruby ntp wget java-1.8.0-openjdk-devel -y",
+                "yum install postgresql.x86_64 -y",
+                "wget https://aws-codedeploy-us-east-1.s3.amazonaws.com/latest/install",
+                "chmod +x ./install",
+                "./install auto",
+                "systemctl start ntpd",
+                "systemctl enable ntpd",
+                "groupadd tomcat",
+                "useradd -M -s /bin/nologin -g tomcat -d /opt/tomcat tomcat",
+                "cd /tmp",
+                "wget http://apache.mirrors.pair.com/tomcat/tomcat-8/v8.5.34/bin/apache-tomcat-8.5.34.tar.gz",
+                "mkdir /opt/tomcat",
+                "tar xvf apache-tomcat-8*tar.gz -C /opt/tomcat --strip-components=1",
+                "cd /opt/tomcat",
+                "chgrp -R tomcat /opt/tomcat",
+                "chmod -R g+r conf",
+                "chmod g+x conf",
+                "chown -R tomcat webapps/ work/ temp/ logs/",
+                "cd /usr/lib/systemd/system",
+                "touch tomcat.service",
+                "echo '[Unit]' > tomcat.service",
+                "echo 'Description=Apache Tomcat Web Application Container' >> tomcat.service",
+                "echo 'After=syslog.target network.target' >> tomcat.service",
+                "echo '[Service]' >> tomcat.service",
+                "echo 'Type=forking' >> tomcat.service",
+                "echo 'Environment=JAVA_HOME=/usr/lib/jvm/jre' >> tomcat.service",
+                "echo 'Environment=CATALINA_PID=/opt/tomcat/temp/tomcat.pid' >> tomcat.service",
+                "echo 'Environment=CATALINA_HOME=/opt/tomcat' >> tomcat.service",
+                "echo 'Environment=CATALINA_BASE=/opt/tomcat' >> tomcat.service",
+                "echo 'Environment=\"CATALINA_OPTS=-Xms512M -Xmx1024M -server -XX:+UseParallelGC\"' >> tomcat.service",
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      "echo 'Environment=\"JAVA_OPTS=-Djava.awt.headless=true -Dspring.profiles.active=dev -Djava.security.egd=file:/dev/./urandom -Dspring.datasource.username=csye6225master -Dspring.datasource.password=csye6225password -Dspring.datasource.url=jdbc:postgresql://",
+                      {
+                        "Fn::GetAtt": [
+                          "myRDSInstance",
+                          "Endpoint.Address"
+                        ]
+                      },
+                      ":5432/csye6225 -DbucketName=",
+                      {
+                        "Ref": "s3AppBucket"
+                      },
+                      "\"' >> tomcat.service"
+                    ]
+                  ]
+                },
+                "echo 'ExecStart=/opt/tomcat/bin/startup.sh' >> tomcat.service",
+                "echo 'ExecStop=/bin/kill -15 $MAINPID' >> tomcat.service",
+                "echo 'User=tomcat' >> tomcat.service",
+                "echo 'Group=tomcat' >> tomcat.service",
+                "echo 'UMask=0007' >> tomcat.service",
+                "echo 'RestartSec=10' >> tomcat.service",
+                "echo 'Restart=always' >> tomcat.service",
+                "echo '[Install]' >> tomcat.service",
+                "echo 'WantedBy=multi-user.target' >> tomcat.service",
+                "systemctl daemon-reload",
+                "systemctl enable tomcat.service",
+                "systemctl start tomcat.service",
+                "wget https://s3.amazonaws.com/amazoncloudwatch-agent/centos/amd64/latest/amazon-cloudwatch-agent.rpm",
+                "rpm -U ./amazon-cloudwatch-agent.rpm",
+                "cd /opt/aws/amazon-cloudwatch-agent/etc",
+                "touch cloudwatch-config.json",
+                "echo '{\"agent\":{' >> cloudwatch-config.json",
+                "echo '\"metrics_collection_interval\":10,' >> cloudwatch-config.json",
+                "echo '\"logfile\": \"/var/logs/amazon-cloudwatch-agent.log\"' >> cloudwatch-config.json",
+                "echo '},' >> cloudwatch-config.json",
+                "echo '\"logs\": {' >> cloudwatch-config.json",
+                "echo '\"logs_collected\": {' >> cloudwatch-config.json", 
+                "echo '\"files\": {' >> cloudwatch-config.json",
+                "echo '\"collect_list\": [' >> cloudwatch-config.json", 
+                "echo '{\"file_path\": \"/opt/tomcat/logs/catalina.out\",' >> cloudwatch-config.json",
+                "echo '\"log_group_name\": \"csye6225_fall2018\",' >> cloudwatch-config.json",
+                "echo '\"log_stream_name\": \"webapp\",' >> cloudwatch-config.json",
+                "echo '\"timestamp_format\": \"%H:%M:%S %y %b %-d\"' >> cloudwatch-config.json",
+                "echo '} ] } },' >> cloudwatch-config.json",
+                "echo '\"log_stream_name\": \"cloudwatch_log_stream\"' >> cloudwatch-config.json",
+                "echo '},' >> cloudwatch-config.json",
+                "echo '\"metrics\":{' >> cloudwatch-config.json",
+                "echo '\"metrics_collected\":{' >> cloudwatch-config.json",
+                "echo '\"statsd\":{' >> cloudwatch-config.json",
+                "echo '\"service_address\":\":8125\",' >> cloudwatch-config.json",
+                "echo '\"metrics_collection_interval\":10,' >> cloudwatch-config.json",
+                "echo '\"metrics_aggregation_interval\":0' >> cloudwatch-config.json",
+                "echo '}}}}' >> cloudwatch-config.json",
+                "touch /tmp/awslogs.conf",
+                "echo '[general]' > /tmp/awslogs.conf",
+                "echo 'state_file= /var/awslogs/agent-state' >> /tmp/awslogs.conf",
+                "echo '[logstream1]' >> /tmp/awslogs.conf",
+                "echo 'file = /opt/tomcat/logs/catalina.out' >> /tmp/awslogs.conf",
+                "echo 'log_group_name = csye6225_fall2018' >> /tmp/awslogs.conf",
+                "echo 'log_stream_name = webapp' >> /tmp/awslogs.conf",
+                "echo 'datetime_format = %d/%b/%Y:%H:%M:%S' >> /tmp/awslogs.conf",
+                "sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/cloudwatch-config.json -s",
+                "wget https://s3.amazonaws.com/configfileforcloudwatch/amazon-cloudwatch-agent.service",
+                "cp amazon-cloudwatch-agent.service /usr/lib/systemd/system/",
+                "systemctl enable amazon-cloudwatch-agent.service",
+                "systemctl start amazon-cloudwatch-agent.service",
+                "service codedeploy-agent start"
+              ]
+            ]
+          }
+        }
+      }
+      },
+    "dbserverSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupName": "csye6225-rds",
+        "VpcId": {
+          "Fn::ImportValue": "csye6225vpcid"
+        },
+        "GroupDescription": "Security group for EC2 instance - DB server",
+        "Tags": [
+          {
+            "Key": "Name",
+            "Value": "csye6225-rds"
+          }
+        ],
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": "5432",
+            "ToPort": "5432",
+            "SourceSecurityGroupId": {
+              "Fn::GetAtt": [
+                "elbSecurityGroup",
+                "GroupId"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "elbSecurityGroup":
+    {
+          "Type": "AWS::EC2::SecurityGroup",
+          "Properties": {
+            "VpcId":{
+              "Fn::ImportValue": "csye6225vpcid"
+            },
+            "Tags": [ {"Key" : "Name", "Value" : "csye-elb"} ],
+            "GroupDescription": "Load Balancer firewall rules",
+            "SecurityGroupIngress": [
+              {
+                "IpProtocol": "tcp",
+                "FromPort": "443",
+                "ToPort": "443",
+                "CidrIp": "0.0.0.0/0"
+              },
+              {
+                "IpProtocol": "tcp",
+                "FromPort": "8080",
+                "ToPort": "8080",
+                "CidrIp": "0.0.0.0/0"
+              }
+            ]
+          }
+        },
+    "myDynamoDBTable": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "id",
+            "AttributeType": "S"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "id",
+            "KeyType": "HASH"
+          }
+        ],
+        "TableName": "csye6225",
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        },
+        "TimeToLiveSpecification": {
+					"AttributeName": "ttl",
+    			"Enabled": "TRUE"
+				}
+      }
+    },
+    "myRDSInstance": {
+      "Type": "AWS::RDS::DBInstance",
+      "Properties": {
+        "AllocatedStorage": "5",
+        "DBInstanceClass": "db.t2.medium",
+        "DBInstanceIdentifier": "csye6225-spring2018",
+        "DBName": "csye6225",
+        "DBSubnetGroupName": {
+          "Ref": "myDBSubnetGroup"
+        },
+        "Engine": "postgres",
+        "EngineVersion": "10.5",
+        "MasterUsername": "csye6225master",
+        "MasterUserPassword": "csye6225password",
+        "VPCSecurityGroups": [
+          {
+            "Fn::GetAtt": [
+              "dbserverSecurityGroup",
+              "GroupId"
+            ]
+          }
+        ],
+        "MultiAZ": false,
+        "PubliclyAccessible": false
+      }
+    },
+    "myInstanceProfile": {
+      "Type": "AWS::IAM::InstanceProfile",
+      "Properties": {
+        "Roles": [
+          {
+            "Fn::ImportValue": "ec2iamrole"
+          }
+        ],
+        "InstanceProfileName": "myProfile"
+      }
+    },
+    "myCodedeployApp": {
+      "Type": "AWS::CodeDeploy::Application",
+      "Properties": {
+        "ApplicationName": "csye6225-fall2018",
+        "ComputePlatform": "Server"
+      }
+    },
+    "myDeploymentGroup": {
+      "Type": "AWS::CodeDeploy::DeploymentGroup",
+      "Properties": {
+        "ApplicationName": {
+          "Ref": "myCodedeployApp"
+        },
+				"AutoScalingGroups" : [{"Ref" : "myAutoScalingGroup"}],
+        "DeploymentConfigName": "CodeDeployDefault.OneAtATime",
+        "DeploymentGroupName": "csye6225-fall2018",
+        "Ec2TagFilters": [
+          {
+            "Key": "EC2-Key",
+            "Value": "EC2-Value",
+            "Type": "KEY_AND_VALUE"
+          }
+        ],
+        "ServiceRoleArn": {
+          "Fn::ImportValue": "codedeployarn"
+        }
+      }
+    },
+    "myDBSubnetGroup": {
+      "Type": "AWS::RDS::DBSubnetGroup",
+      "Properties": {
+        "DBSubnetGroupDescription": "making a RDS subnet from my VPC",
+        "SubnetIds": [
+          {
+            "Fn::ImportValue": "dbsub1"
+          },
+          {
+            "Fn::ImportValue": "dbsub2"
+          }
+        ]
+      }
+    },
+		"myLoadBalancer" : {
+      "Type" : "AWS::ElasticLoadBalancingV2::LoadBalancer",
+      "Properties" : {
+        "Scheme" : "internet-facing",
+        "Subnets" : [{"Fn::ImportValue": "elbSubnet1"},{"Fn::ImportValue": "elbSubnet2"}],
+				"SecurityGroups" : [{"Ref" : "elbSecurityGroup"}]
+      }
+    },
+    "myListener" : {
+      "Type" : "AWS::ElasticLoadBalancingV2::Listener",
+
+      "Properties" : {
+        "DefaultActions" : [{
+        "Type" : "forward",
+        "TargetGroupArn" : { "Ref" : "myTargetGroup" }
+        }],
+        "LoadBalancerArn" : { "Ref" : "myLoadBalancer" },
+        "Port" : "443",
+        "Protocol" : "HTTPS",
+				"Certificates" : [{"CertificateArn" : {"Ref" : "CertificateArn"}}]
+      }
+    },
+    "myTargetGroup" : {
+      "Type" : "AWS::ElasticLoadBalancingV2::TargetGroup",
+      "Properties" : {
+        "HealthCheckIntervalSeconds" : 60,
+        "HealthCheckTimeoutSeconds" : 5,
+        "HealthyThresholdCount" : 3,
+        "Port" : 8080,
+        "Protocol" : "HTTP",
+        "UnhealthyThresholdCount" : 5,
+        "VpcId" : {"Fn::ImportValue": "csye6225vpcid"},
+        "TargetGroupAttributes": [{
+          "Key": "stickiness.enabled",
+          "Value": "true"}]
+      }
+    },
+		"myDNSRecord" : {
+      "Type" : "AWS::Route53::RecordSet",
+      "Properties" : {
+         "HostedZoneName" : { "Ref" : "hostedZone" },
+         "Comment" : "DNS name for my instance.",
+         "Name" : {"Ref":"hostedZone"},
+         "Type" : "A",
+				 "AliasTarget" : {
+					  "DNSName" : {"Fn::GetAtt" : [ "myLoadBalancer", "DNSName" ]},
+					  "HostedZoneId" : { "Fn::GetAtt" : ["myLoadBalancer", "CanonicalHostedZoneID"] }
+					}
+      }
+
+	},
+    "myS3Bucket": {
+      "Type": "AWS::S3::Bucket",
+      "Properties": {
+        "BucketName": {
+          "Ref": "s3AppBucket"
+        }
+      }
+    },
+
+
+ "WAFWhitelistSet": {
+      "Type": "AWS::WAFRegional::IPSet",
+      "Condition": "CreateWebACL",
+      "Properties": {
+        "Name": {
+          "Fn::Join": [" - ", [{
+            "Ref": "AWS::StackName"
+          }, "Whitelist Set"]]
+        }
+      }
+    },
+    "WAFBlacklistSet": {
+      "Type": "AWS::WAFRegional::IPSet",
+      "Condition": "LogParserActivated",
+      "Properties": {
+        "Name": {
+          "Fn::Join": [" - ", [{
+            "Ref": "AWS::StackName"
+          }, "Blacklist Set"]]
+        }
+      }
+    },
+    "WAFScansProbesSet": {
+      "Type": "AWS::WAFRegional::IPSet",
+      "Condition": "LogParserActivated",
+      "Properties": {
+        "Name": {
+          "Fn::Join": [" - ", [{
+            "Ref": "AWS::StackName"
+          }, "Scans Probes Set"]]
+        }
+      }
+    },
+    "WAFReputationListsSet1": {
+      "Type": "AWS::WAFRegional::IPSet",
+      "Condition": "ReputationListsProtectionActivated",
+      "Properties": {
+        "Name": {
+          "Fn::Join": [" - ", [{
+            "Ref": "AWS::StackName"
+          }, "IP Reputation Lists Set #1"]]
+        }
+      }
+    },
+    "WAFReputationListsSet2": {
+      "Type": "AWS::WAFRegional::IPSet",
+      "Condition": "ReputationListsProtectionActivated",
+      "Properties": {
+        "Name": {
+          "Fn::Join": [" - ", [{
+            "Ref": "AWS::StackName"
+          }, "IP Reputation Lists Set #2"]]
+        }
+      }
+    },
+    "WAFBadBotSet": {
+      "Type": "AWS::WAFRegional::IPSet",
+      "Condition": "BadBotProtectionActivated",
+      "Properties": {
+        "Name": {
+          "Fn::Join": [" - ", [{
+            "Ref": "AWS::StackName"
+          }, "IP Bad Bot Set"]]
+        }
+      }
+    },
+    "WAFSqlInjectionDetection": {
+      "Type": "AWS::WAFRegional::SqlInjectionMatchSet",
+      "Condition": "SqlInjectionProtectionActivated",
+      "Properties": {
+        "Name": {
+          "Fn::Join": [" - ", [{
+            "Ref": "AWS::StackName"
+          }, "SQL injection Detection"]]
+        },
+        "SqlInjectionMatchTuples": [{
+          "FieldToMatch": {
+            "Type": "QUERY_STRING"
+          },
+          "TextTransformation": "URL_DECODE"
+        }, {
+          "FieldToMatch": {
+            "Type": "QUERY_STRING"
+          },
+          "TextTransformation": "HTML_ENTITY_DECODE"
+        }, {
+          "FieldToMatch": {
+            "Type": "BODY"
+          },
+          "TextTransformation": "URL_DECODE"
+        }, {
+          "FieldToMatch": {
+            "Type": "BODY"
+          },
+          "TextTransformation": "HTML_ENTITY_DECODE"
+        }, {
+          "FieldToMatch": {
+            "Type": "URI"
+          },
+          "TextTransformation": "URL_DECODE"
+        }, {
+          "FieldToMatch": {
+            "Type": "URI"
+          },
+          "TextTransformation": "HTML_ENTITY_DECODE"
+        }, {
+          "FieldToMatch": {
+            "Type": "HEADER",
+            "Data": "Cookie"
+          },
+          "TextTransformation": "URL_DECODE"
+        }, {
+          "FieldToMatch": {
+            "Type": "HEADER",
+            "Data": "Cookie"
+          },
+          "TextTransformation": "HTML_ENTITY_DECODE"
+        }, {
+          "FieldToMatch": {
+            "Type": "HEADER",
+            "Data": "Authorization"
+          },
+          "TextTransformation": "URL_DECODE"
+        }, {
+          "FieldToMatch": {
+            "Type": "HEADER",
+            "Data": "Authorization"
+          },
+          "TextTransformation": "HTML_ENTITY_DECODE"
+        }]
+      }
+    },
+    "WAFXssDetection": {
+      "Type": "AWS::WAFRegional::XssMatchSet",
+      "Condition": "CrossSiteScriptingProtectionActivated",
+      "Properties": {
+        "Name": {
+          "Fn::Join": [" - ", [{
+            "Ref": "AWS::StackName"
+          }, "XSS Detection Detection"]]
+        },
+        "XssMatchTuples": [{
+          "FieldToMatch": {
+            "Type": "QUERY_STRING"
+          },
+          "TextTransformation": "URL_DECODE"
+        }, {
+          "FieldToMatch": {
+            "Type": "QUERY_STRING"
+          },
+          "TextTransformation": "HTML_ENTITY_DECODE"
+        }, {
+          "FieldToMatch": {
+            "Type": "BODY"
+          },
+          "TextTransformation": "URL_DECODE"
+        }, {
+          "FieldToMatch": {
+            "Type": "BODY"
+          },
+          "TextTransformation": "HTML_ENTITY_DECODE"
+        }, {
+          "FieldToMatch": {
+            "Type": "URI"
+          },
+          "TextTransformation": "URL_DECODE"
+        }, {
+          "FieldToMatch": {
+            "Type": "URI"
+          },
+          "TextTransformation": "HTML_ENTITY_DECODE"
+        }, {
+          "FieldToMatch": {
+            "Type": "HEADER",
+            "Data": "Cookie"
+          },
+          "TextTransformation": "URL_DECODE"
+        }, {
+          "FieldToMatch": {
+            "Type": "HEADER",
+            "Data": "Cookie"
+          },
+          "TextTransformation": "HTML_ENTITY_DECODE"
+        }]
+      }
+    },
+    "WAFWhitelistRule": {
+      "Type": "AWS::WAFRegional::Rule",
+      "Condition": "CreateWebACL",
+      "DependsOn": "WAFWhitelistSet",
+      "Properties": {
+        "Name": {
+          "Fn::Join": [" - ", [{
+            "Ref": "AWS::StackName"
+          }, "Whitelist Rule"]]
+        },
+        "MetricName": "SecurityAutomationsWhitelistRule",
+        "Predicates": [{
+          "DataId": {
+            "Ref": "WAFWhitelistSet"
+          },
+          "Negated": false,
+          "Type": "IPMatch"
+        }]
+      }
+    },
+    "WAFBlacklistRule": {
+      "Type": "AWS::WAFRegional::Rule",
+      "Condition": "LogParserActivated",
+      "DependsOn": "WAFBlacklistSet",
+      "Properties": {
+        "Name": {
+          "Fn::Join": [" - ", [{
+            "Ref": "AWS::StackName"
+          }, "Blacklist Rule"]]
+        },
+        "MetricName": "SecurityAutomationsBlacklistRule",
+        "Predicates": [{
+          "DataId": {
+            "Ref": "WAFBlacklistSet"
+          },
+          "Negated": false,
+          "Type": "IPMatch"
+        }]
+      }
+    },
+    "WAFScansProbesRule": {
+      "Type": "AWS::WAFRegional::Rule",
+      "Condition": "LogParserActivated",
+      "DependsOn": "WAFScansProbesSet",
+      "Properties": {
+        "Name": {
+          "Fn::Join": [" - ", [{
+            "Ref": "AWS::StackName"
+          }, "Scans Probes Rule"]]
+        },
+        "MetricName": "SecurityAutomationsScansProbesRule",
+        "Predicates": [{
+          "DataId": {
+            "Ref": "WAFScansProbesSet"
+          },
+          "Negated": false,
+          "Type": "IPMatch"
+        }]
+      }
+    },
+    "WAFIPReputationListsRule1": {
+      "Type": "AWS::WAFRegional::Rule",
+      "Condition": "ReputationListsProtectionActivated",
+      "DependsOn": "WAFReputationListsSet1",
+      "Properties": {
+        "Name": {
+          "Fn::Join": [" - ", [{
+            "Ref": "AWS::StackName"
+          }, "WAF IP Reputation Lists Rule #1"]]
+        },
+        "MetricName": "SecurityAutomationsIPReputationListsRule1",
+        "Predicates": [{
+          "DataId": {
+            "Ref": "WAFReputationListsSet1"
+          },
+          "Type": "IPMatch",
+          "Negated": "false"
+        }]
+      }
+    },
+    "WAFIPReputationListsRule2": {
+      "Type": "AWS::WAFRegional::Rule",
+      "Condition": "ReputationListsProtectionActivated",
+      "DependsOn": "WAFReputationListsSet2",
+      "Properties": {
+        "Name": {
+          "Fn::Join": [" - ", [{
+            "Ref": "AWS::StackName"
+          }, "WAF IP Reputation Lists Rule #2"]]
+        },
+        "MetricName": "SecurityAutomationsIPReputationListsRule2",
+        "Predicates": [{
+          "DataId": {
+            "Ref": "WAFReputationListsSet2"
+          },
+          "Type": "IPMatch",
+          "Negated": "false"
+        }]
+      }
+    },
+    "WAFBadBotRule": {
+      "Type": "AWS::WAFRegional::Rule",
+      "Condition": "BadBotProtectionActivated",
+      "DependsOn": "WAFBadBotSet",
+      "Properties": {
+        "Name": {
+          "Fn::Join": [" - ", [{
+            "Ref": "AWS::StackName"
+          }, "Bad Bot Rule"]]
+        },
+        "MetricName": "SecurityAutomationsBadBotRule",
+        "Predicates": [{
+          "DataId": {
+            "Ref": "WAFBadBotSet"
+          },
+          "Type": "IPMatch",
+          "Negated": "false"
+        }]
+      }
+    },
+    "WAFSqlInjectionRule": {
+      "Type": "AWS::WAFRegional::Rule",
+      "Condition": "SqlInjectionProtectionActivated",
+      "DependsOn": "WAFSqlInjectionDetection",
+      "Properties": {
+        "Name": {
+          "Fn::Join": [" - ", [{
+            "Ref": "AWS::StackName"
+          }, "SQL Injection Rule"]]
+        },
+        "MetricName": "SecurityAutomationsSqlInjectionRule",
+        "Predicates": [{
+          "DataId": {
+            "Ref": "WAFSqlInjectionDetection"
+          },
+          "Negated": false,
+          "Type": "SqlInjectionMatch"
+        }]
+      }
+    },
+    "WAFXssRule": {
+      "Type": "AWS::WAFRegional::Rule",
+      "Condition": "CrossSiteScriptingProtectionActivated",
+      "DependsOn": "WAFXssDetection",
+      "Properties": {
+        "Name": {
+          "Fn::Join": [" - ", [{
+            "Ref": "AWS::StackName"
+          }, "XSS Rule"]]
+        },
+        "MetricName": "SecurityAutomationsXssRule",
+        "Predicates": [{
+          "DataId": {
+            "Ref": "WAFXssDetection"
+          },
+          "Negated": false,
+          "Type": "XssMatch"
+        }]
+      }
+    },
+    "WAFWebACL": {
+      "Type": "AWS::WAFRegional::WebACL",
+      "Condition": "CreateWebACL",
+      "DependsOn": ["WAFWhitelistRule"],
+      "Properties": {
+        "Name": {
+          "Ref": "AWS::StackName"
+        },
+        "DefaultAction": {
+          "Type": "ALLOW"
+        },
+        "MetricName": "SecurityAutomationsMaliciousRequesters",
+        "Rules": [{
+          "Action": {
+            "Type": "ALLOW"
+          },
+          "Priority": 10,
+          "RuleId": {
+            "Ref": "WAFWhitelistRule"
+          }
+        }]
+      }
+    },
+    
+
+
+
+
+    "ApiGatewayBadBot": {
+      "Type": "AWS::ApiGateway::RestApi",
+      "Condition": "BadBotProtectionActivated",
+      "Properties": {
+        "Name": "Security Automations - WAF Bad Bot API",
+        "Description": "API created by AWS WAF Security Automations CloudFormation template. This endpoint will be used to capture bad bots."
+      }
+    },
+    "ApiGatewayBadBotResource": {
+      "Type": "AWS::ApiGateway::Resource",
+      "Condition": "BadBotProtectionActivated",
+      "Properties": {
+        "RestApiId": {
+          "Ref": "ApiGatewayBadBot"
+        },
+        "ParentId": {
+          "Fn::GetAtt": ["ApiGatewayBadBot", "RootResourceId"]
+        },
+        "PathPart": "{proxy+}"
+      }
+    }
+
+
+
+  }
+}

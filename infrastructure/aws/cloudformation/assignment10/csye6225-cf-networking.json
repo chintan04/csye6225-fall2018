@@ -1,0 +1,286 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+  "Description": "AWS VPC Template",
+  "Parameters" : {
+    "VPCCIDR" : {
+      "Type" : "String",
+      "Description" : "IP Address range for the VPN connected VPC",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+    "subnet1" : {
+      "Type" : "String",
+      "Description" : "IP Address range for the VPN connected VPC",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+    "subnet2" : {
+      "Type" : "String",
+      "Description" : "IP Address range for the VPN connected VPC",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+    "subnet3" : {
+      "Type" : "String",
+      "Description" : "IP Address range for the VPN connected VPC",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+    "subnet4" : {
+      "Type" : "String",
+      "Description" : "IP Address range for the VPN connected VPC",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+    "subnet5" : {
+      "Type" : "String",
+      "Description" : "IP Address range for the VPN connected VPC",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    },
+    "subnet6" : {
+      "Type" : "String",
+      "Description" : "IP Address range for the VPN connected VPC",
+      "ConstraintDescription": "must be a valid IP CIDR range of the form x.x.x.x/x."
+    }
+  },
+    
+  "Resources" :
+  {
+      "myVPC" : { 
+       "Type" : "AWS::EC2::VPC",
+       "Properties":
+       {
+          "CidrBlock" : { "Ref" : "VPCCIDR" },
+          "InstanceTenancy" : "default",
+          "Tags": [{"Key" : "Name", "Value" : "SampleVPC"}],
+          "EnableDnsSupport" : "true",
+          "EnableDnsHostnames" : "true"
+       }
+      },
+      
+
+      
+        "subnetA" : { 
+        "Type" : "AWS::EC2::Subnet",
+        "Properties" :
+        {
+          "VpcId" : { "Ref" : "myVPC" },
+          "CidrBlock" : { "Ref" : "subnet1" },
+          "AvailabilityZone" : "us-east-1a",
+          "Tags" : [ { "Key" : "Name", "Value" : "Sub_private1" } ]
+          }
+        },
+      
+      
+      
+        "subnetB" : {
+        "Type" : "AWS::EC2::Subnet",
+        "Properties" :
+        {
+          "VpcId" : { "Ref" : "myVPC" },
+          "MapPublicIpOnLaunch": "true",
+          "CidrBlock" : { "Ref" : "subnet2" },
+          "AvailabilityZone" : "us-east-1a",
+          "Tags" : [ { "Key" : "Name", "Value" : "Sub_public1" } ]
+
+        }
+      },
+    
+      
+      
+        "dbsubnet1" : {
+        "Type" : "AWS::EC2::Subnet",
+        "Properties" :
+        {
+          "VpcId" : { "Ref" : "myVPC" },
+          "CidrBlock" : { "Ref" : "subnet3" },
+          "AvailabilityZone" : "us-east-1b",
+          "Tags" : [ { "Key" : "Name", "Value" : "dbsubnet1" } ]
+        }
+      },
+
+      
+      
+        "subnetD" : {
+        "Type" : "AWS::EC2::Subnet",
+        "Properties" :
+        {
+          "VpcId" : { "Ref" : "myVPC" },
+          "MapPublicIpOnLaunch": "true",
+          "CidrBlock" : { "Ref" : "subnet4" },
+          "AvailabilityZone" : "us-east-1b",
+          "Tags" : [ { "Key" : "Name", "Value" : "Sub_public2" } ]
+
+        }
+      },
+      "dbsubnet2" : {
+        "Type" : "AWS::EC2::Subnet",
+        "Properties" :
+        {
+          "VpcId" : { "Ref" : "myVPC" },
+          "AvailabilityZone" : "us-east-1c",
+          "CidrBlock" : { "Ref" : "subnet5" },
+          "Tags" : [ { "Key" : "Name", "Value" : "dbsubnet2" } ]
+
+        }
+      },
+      
+      
+      
+      "subnetF" : {
+      "Type" : "AWS::EC2::Subnet",
+      "Properties" :
+      {
+        "VpcId" : { "Ref" : "myVPC" },
+        "AvailabilityZone" : "us-east-1c",
+        "MapPublicIpOnLaunch": "true",
+        "CidrBlock" : { "Ref" : "subnet6" },
+        "Tags" : [ { "Key" : "Name", "Value" : "Sub_public3" } ]
+
+      }
+    },
+      "myInternetGateway" : {
+        "Type" : "AWS::EC2::InternetGateway",
+        "Properties":
+        {
+            "Tags" : [ {"Key" : "Name", "Value" : "gatewayName" } ]
+        }
+     },
+        "AttachGateway" : {
+            "Type" : "AWS::EC2::VPCGatewayAttachment",
+            "Properties" : {
+               "VpcId" : { "Ref" : "myVPC" },
+               "InternetGatewayId" : { "Ref" : "myInternetGateway" }
+            }
+         },
+
+    
+    
+      "myRouteTable" : {
+        
+          "Type": "AWS::EC2::RouteTable",
+          "Properties":
+          {
+              "VpcId":{ "Ref": "myVPC" },
+              "Tags":[ { "Key" : "Name", "Value": "Public_routetb" } ]
+          }
+        },
+
+      "myRoute" : {
+        "Type" : "AWS::EC2::Route",
+        "DependsOn":"AttachGateway",
+        "Properties" : {
+            "RouteTableId" : { "Ref" : "myRouteTable" },
+            "DestinationCidrBlock":"0.0.0.0/0",
+            "GatewayId" : { "Ref" : "myInternetGateway" }
+        }
+      },
+    
+
+      "association1":
+      {
+        "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+        "Properties" :
+        {
+          "RouteTableId" : {"Ref":"myRouteTable"},
+          "SubnetId" : {"Ref":"subnetB"}
+        }
+      },
+      "association2":
+      {
+        "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+        "Properties" :
+        {
+          "RouteTableId" : {"Ref":"myRouteTable"},
+          "SubnetId" : {"Ref":"subnetD"}
+        }
+      },
+      "association3":
+      {
+        "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+        "Properties" :
+        {
+          "RouteTableId" : {"Ref":"myRouteTable"},
+          "SubnetId" : {"Ref":"subnetF"}
+        }
+      },
+      "association4":
+      {
+        "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+        "Properties" :
+        {
+          "RouteTableId" : {"Ref":"myRouteTable"},
+          "SubnetId" : {"Ref":"subnetA"}
+        }
+      },
+
+      "myPrivateRouteTable":
+        {
+          "Type": "AWS::EC2::RouteTable",
+          "Properties":
+          {
+              "Tags" : [ {"Key" : "Name", "Value" : "privateroutetableName" } ],
+              "VpcId":
+              {
+                  "Ref": "myVPC"
+              }
+            }
+          },
+      "associationpri2":
+      {
+        "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+        "Properties" :
+        {
+          "RouteTableId" : {"Ref":"myPrivateRouteTable"},
+          "SubnetId" : {"Ref":"dbsubnet1"}
+        }
+      },
+      "associationpri3":
+      {
+        "Type" : "AWS::EC2::SubnetRouteTableAssociation",
+        "Properties" :
+        {
+          "RouteTableId" : {"Ref":"myPrivateRouteTable"},
+          "SubnetId" : {"Ref":"dbsubnet2"}
+        }      
+    }
+  },
+    
+
+    "Outputs": {
+      "VpcId": {
+            "Description": "The ID of the VPC",
+            "Value": {
+              "Ref": "myVPC"
+            },
+            "Export": {
+              "Name": "csye6225vpcid"
+            }
+            },
+            "webServer1": {
+              "Description": "Webserver subnet 1",
+              "Value": { "Ref": "subnetB"},
+              "Export": { "Name": "webServer1" }
+            },
+            "webServer2": {
+              "Description": "Webserver subnet 2",
+              "Value": { "Ref": "subnetD" },
+              "Export": { "Name": "webServer2" }
+            },
+      "elbSubnet1": {
+            "Description": "ELB Subnet 1",
+            "Value": { "Ref": "subnetF"},
+            "Export": {"Name": "elbSubnet1"}
+          },
+      "elbSubnet2": {
+            "Description": "ELB Subnet 2",
+            "Value": { "Ref": "subnetA"},
+            "Export": {"Name": "elbSubnet2"}
+          },
+      "dbsubnet1ID" : {
+            "Description" : "Availability Zone 1 of the DB server",
+            "Value" : { "Ref" : "dbsubnet1" },
+            "Export" : {"Name" : "dbsub1"}
+          },
+      "dbsubnet2ID" : {
+            "Description" : "Availability Zone 2 of the DB server",
+            "Value" : { "Ref" : "dbsubnet2" },
+            "Export" : {"Name" : "dbsub2"}
+          }
+    }
+  }
