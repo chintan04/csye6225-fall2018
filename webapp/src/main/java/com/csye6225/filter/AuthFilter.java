@@ -18,6 +18,7 @@ public class AuthFilter {
     {
         final String authorization = request.getHeader("Authorization");
         if (authorization != null && authorization.toLowerCase().startsWith("basic")) {
+            System.out.println("authorization");
             String base64Credentials = authorization.substring("Basic".length()).trim();
             byte[] credDecoded = Base64.getDecoder().decode(base64Credentials);
             String credentials = new String(credDecoded, StandardCharsets.UTF_8);
@@ -25,6 +26,7 @@ public class AuthFilter {
             final String[] values = credentials.split(":", 2);
             String username = values[0];
             String pwd = values[1];
+            System.out.println("username - " +username);
             List<Users> userlist = userJpaRespository.findAll();
             for (Users u : userlist) {
                 if (u.getUsername().equals(username)) {

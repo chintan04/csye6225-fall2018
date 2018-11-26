@@ -1,0 +1,10 @@
+[
+    {
+        "ParameterValue": "code-deploy.csye6225-fall2018-gaikawads.me",
+        "ParameterKey": "s3CodeDeploybucket"
+    },
+    {
+        "ParameterValue": "csye6225-fall2018-gaikawads.me.csye6225.com",
+        "ParameterKey": "s3Attachmentbucket"
+    }
+]
