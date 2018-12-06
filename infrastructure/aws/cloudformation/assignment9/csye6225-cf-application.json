@@ -1,6 +1,29 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
   "Description": "AWS CloudFormation Template",
+
+
+  "Metadata":{  
+    "AWS::CloudFormation::Interface":{  
+       "ParameterGroups":[  
+          {  
+             "Label":{  
+                "default":"Web ACL Name for Common Attack Protection"
+             },
+             "Parameters":[  
+                "WebACLName"
+             ]
+          }
+       ],
+       "ParameterLabels":{  
+          "WebACLName":{  
+             "default":"Name"
+          }
+       }
+    }
+ },
+
+
   "Parameters": {
     "s3AppBucket": {
       "Type": "String",
@@ -13,7 +36,14 @@
     "CertificateArn":{
       "Type":"String"
     },
-    "hostedZone":{"Type" : "String"}
+    "hostedZone":{"Type" : "String"},
+
+    "WebACLName":{  
+      "Type":"String",
+      "Default":"CommonAttackProtection",
+      "Description":"Enter the name you want to use for the WebACL. This value is also added as a prefix for the names of the rules, conditions, and CloudWatch metrics created by this template."
+   }
+
   },
   "Resources": {
     "webserverSecurityGroup": {
@@ -91,9 +121,9 @@
           "MetricName": "CPUUtilization",
           "Namespace": "AWS/EC2",
           "Statistic": "Average",
-          "Period": "300",
-          "EvaluationPeriods": "2",
-          "Threshold": "90",
+          "Period": "120",
+          "EvaluationPeriods": "3",
+          "Threshold": "10",
           "AlarmActions": [
             {
               "Ref": "WebServerScaleUpPolicy"
@@ -117,9 +147,9 @@
           "MetricName": "CPUUtilization",
           "Namespace": "AWS/EC2",
           "Statistic": "Average",
-          "Period": "300",
-          "EvaluationPeriods": "2",
-          "Threshold": "70",
+          "Period": "120",
+          "EvaluationPeriods": "3",
+          "Threshold": "8",
           "AlarmActions": [
             {
               "Ref": "WebServerScaleDownPolicy"
@@ -167,7 +197,7 @@
                 "groupadd tomcat",
                 "useradd -M -s /bin/nologin -g tomcat -d /opt/tomcat tomcat",
                 "cd /tmp",
-                "wget http://apache.mirrors.pair.com/tomcat/tomcat-8/v8.5.34/bin/apache-tomcat-8.5.34.tar.gz",
+                "wget http://ftp.naz.com/apache/tomcat/tomcat-8/v8.5.35/bin/apache-tomcat-8.5.35.tar.gz",
                 "mkdir /opt/tomcat",
                 "tar xvf apache-tomcat-8*tar.gz -C /opt/tomcat --strip-components=1",
                 "cd /opt/tomcat",
@@ -311,6 +341,12 @@
               },
               {
                 "IpProtocol": "tcp",
+                "FromPort": "80",
+                "ToPort": "80",
+                "CidrIp": "0.0.0.0/0"
+              },
+              {
+                "IpProtocol": "tcp",
                 "FromPort": "8080",
                 "ToPort": "8080",
                 "CidrIp": "0.0.0.0/0"
@@ -431,7 +467,7 @@
 				"SecurityGroups" : [{"Ref" : "elbSecurityGroup"}]
       }
     },
-    "myListener" : {
+    "myListenerHTTPS" : {
       "Type" : "AWS::ElasticLoadBalancingV2::Listener",
 
       "Properties" : {
@@ -443,6 +479,23 @@
         "Port" : "443",
         "Protocol" : "HTTPS",
 				"Certificates" : [{"CertificateArn" : {"Ref" : "CertificateArn"}}]
+      }
+    },
+    "myListenerHTTP" : {
+      "Type" : "AWS::ElasticLoadBalancingV2::Listener",
+
+      "Properties" : {
+        "DefaultActions" : [{
+          "RedirectConfig":{
+            "Protocol":"HTTPS",
+            "StatusCode": "HTTP_301",
+            "Port" : "443"
+          },
+          "Type" : "redirect"
+        }],
+        "LoadBalancerArn" : { "Ref" : "myLoadBalancer" },
+        "Port" : "80",
+        "Protocol" : "HTTP"
       }
     },
     "myTargetGroup" : {
@@ -460,6 +513,421 @@
           "Value": "true"}]
       }
     },
+
+    "MyWebACLAssociation":{  
+      "Type":"AWS::WAFRegional::WebACLAssociation",
+      "DependsOn":[  
+         "myLoadBalancer",
+         "MyWebACL"
+      ],
+      "Properties":{  
+         "ResourceArn":{  
+            "Ref":"myLoadBalancer"
+         },
+         "WebACLId":{  
+            "Ref":"MyWebACL"
+         }
+      }
+   },
+   "MyWebACL":{  
+      "Type":"AWS::WAFRegional::WebACL",
+      "DependsOn":[  
+         "myIPSetRule"
+      ],
+      "Properties":{  
+         "Name":{  
+            "Ref":"WebACLName"
+         },
+         "DefaultAction":{  
+            "Type":"ALLOW"
+         },
+         "MetricName":{  
+            "Ref":"WebACLName"
+         },
+         "Rules":[  
+            {  
+               "Action":{  
+                  "Type":"BLOCK"
+               },
+               "Priority":1,
+               "RuleId":{  
+                  "Ref":"ManualIPBlockRule"
+               }
+            },
+            {  
+               "Action":{  
+                  "Type":"COUNT"
+               },
+               "Priority":2,
+               "RuleId":{  
+                  "Ref":"SizeMatchRule"
+               }
+            },
+            {  
+               "Action":{  
+                  "Type":"BLOCK"
+               },
+               "Priority":3,
+               "RuleId":{  
+                  "Ref":"SqliRule"
+               }
+            },
+            {  
+               "Action":{  
+                  "Type":"BLOCK"
+               },
+               "Priority":4,
+               "RuleId":{  
+                  "Ref":"XssRule"
+               }
+            }
+         ]
+      }
+   },
+   "myIPSetRule":{  
+      "Type":"AWS::WAFRegional::Rule",
+      "DependsOn":[  
+         "myIPSetBlacklist"
+      ],
+      "Properties":{  
+         "Name":"myIPSetRule",
+         "MetricName":"myIPSetRule",
+         "Predicates":[  
+            {  
+               "DataId":{  
+                  "Ref":"myIPSetBlacklist"
+               },
+               "Negated":false,
+               "Type":"IPMatch"
+            }
+         ]
+      }
+   },
+   "myIPSetBlacklist":{  
+      "Type":"AWS::WAFRegional::IPSet",
+      "Properties":{  
+         "Name":"myIPSetBlacklist",
+         "IPSetDescriptors":[  
+            {  
+               "Type":"IPV4",
+               "Value":"155.33.135.0/32"
+            },
+            {  
+               "Type":"IPV4",
+               "Value":"155.33.135.0/32"
+            }
+         ]
+      }
+   },
+   "SqliRule":{  
+      "Properties":{  
+         "Name":{  
+            "Fn::Join":[  
+               "",
+               [  
+                  {  
+                     "Ref":"WebACLName"
+                  },
+                  "SqliRule"
+               ]
+            ]
+         },
+         "MetricName":{  
+            "Fn::Join":[  
+               "",
+               [  
+                  {  
+                     "Ref":"WebACLName"
+                  },
+                  "SqliRule"
+               ]
+            ]
+         },
+         "Predicates":[  
+            {  
+               "DataId":{  
+                  "Ref":"SqliMatchSet"
+               },
+               "Negated":false,
+               "Type":"SqlInjectionMatch"
+            }
+         ]
+      },
+      "Type":"AWS::WAFRegional::Rule"
+   },
+   "XssRule":{  
+      "Properties":{  
+         "Name":{  
+            "Fn::Join":[  
+               "",
+               [  
+                  {  
+                     "Ref":"WebACLName"
+                  },
+                  "XssRule"
+               ]
+            ]
+         },
+         "MetricName":{  
+            "Fn::Join":[  
+               "",
+               [  
+                  {  
+                     "Ref":"WebACLName"
+                  },
+                  "XssRule"
+               ]
+            ]
+         },
+         "Predicates":[  
+            {  
+               "DataId":{  
+                  "Ref":"XssMatchSet"
+               },
+               "Negated":false,
+               "Type":"XssMatch"
+            }
+         ]
+      },
+      "Type":"AWS::WAFRegional::Rule"
+   },
+   "SizeMatchRule":{  
+      "Properties":{  
+         "Name":{  
+            "Fn::Join":[  
+               "",
+               [  
+                  {  
+                     "Ref":"WebACLName"
+                  },
+                  "LargeBodyMatchRule"
+               ]
+            ]
+         },
+         "MetricName":{  
+            "Fn::Join":[  
+               "",
+               [  
+                  {  
+                     "Ref":"WebACLName"
+                  },
+                  "DetectLargeBody"
+               ]
+            ]
+         },
+         "Predicates":[  
+            {  
+               "DataId":{  
+                  "Ref":"sizeRestrict"
+               },
+               "Negated":false,
+               "Type":"SizeConstraint"
+            }
+         ]
+      },
+      "Type":"AWS::WAFRegional::Rule"
+   },
+   "ManualIPBlockRule":{  
+      "Properties":{  
+         "Name":{  
+            "Fn::Join":[  
+               "",
+               [  
+                  {  
+                     "Ref":"WebACLName"
+                  },
+                  "ManualIPBlockRule"
+               ]
+            ]
+         },
+         "MetricName":{  
+            "Fn::Join":[  
+               "",
+               [  
+                  {  
+                     "Ref":"WebACLName"
+                  },
+                  "ManualIPBlockRule"
+               ]
+            ]
+         },
+         "Predicates":[  
+            {  
+               "DataId":{  
+                  "Ref":"WAFManualIPBlockSet"
+               },
+               "Negated":false,
+               "Type":"IPMatch"
+            }
+         ]
+      },
+      "Type":"AWS::WAFRegional::Rule"
+   },
+   "WAFManualIPBlockSet":{  
+      "Properties":{  
+         "Name":"Manual IP Block Set"
+      },
+      "Type":"AWS::WAFRegional::IPSet"
+   },
+   "sizeRestrict":{  
+      "Type":"AWS::WAFRegional::SizeConstraintSet",
+      "Properties":{  
+         "Name":"sizeRestrict",
+         "SizeConstraints":[  
+            {  
+               "FieldToMatch":{  
+                  "Type":"URI"
+               },
+               "TextTransformation":"NONE",
+               "ComparisonOperator":"GT",
+               "Size":"512"
+            },
+            {  
+               "FieldToMatch":{  
+                  "Type":"QUERY_STRING"
+               },
+               "TextTransformation":"NONE",
+               "ComparisonOperator":"GT",
+               "Size":"1024"
+            },
+            {  
+               "FieldToMatch":{  
+                  "Type":"BODY"
+               },
+               "TextTransformation":"NONE",
+               "ComparisonOperator":"GT",
+               "Size":"10000000"
+            },
+            {  
+               "FieldToMatch":{  
+                  "Type":"HEADER",
+                  "Data":"cookie"
+               },
+               "TextTransformation":"NONE",
+               "ComparisonOperator":"GT",
+               "Size":"4096"
+            }
+         ]
+      }
+   },
+   "SqliMatchSet":{  
+      "Type":"AWS::WAFRegional::SqlInjectionMatchSet",
+      "Properties":{  
+         "Name":{  
+            "Fn::Join":[  
+               "",
+               [  
+                  {  
+                     "Ref":"WebACLName"
+                  },
+                  "SqliMatch"
+               ]
+            ]
+         },
+         "SqlInjectionMatchTuples":[  
+            {  
+               "FieldToMatch":{  
+                  "Type":"URI"
+               },
+               "TextTransformation":"URL_DECODE"
+            },
+            {  
+               "FieldToMatch":{  
+                  "Type":"URI"
+               },
+               "TextTransformation":"HTML_ENTITY_DECODE"
+            },
+            {  
+               "FieldToMatch":{  
+                  "Type":"QUERY_STRING"
+               },
+               "TextTransformation":"URL_DECODE"
+            },
+            {  
+               "FieldToMatch":{  
+                  "Type":"QUERY_STRING"
+               },
+               "TextTransformation":"HTML_ENTITY_DECODE"
+            },
+            {  
+               "FieldToMatch":{  
+                  "Type":"BODY"
+               },
+               "TextTransformation":"URL_DECODE"
+            },
+            {  
+               "FieldToMatch":{  
+                  "Type":"BODY"
+               },
+               "TextTransformation":"HTML_ENTITY_DECODE"
+            },
+            {  
+               "FieldToMatch":{  
+                  "Type":"HEADER",
+                  "Data":"cookie"
+               },
+               "TextTransformation":"URL_DECODE"
+            },
+            {  
+               "FieldToMatch":{  
+                  "Type":"HEADER",
+                  "Data":"cookie"
+               },
+               "TextTransformation":"HTML_ENTITY_DECODE"
+            }
+         ]
+      }
+   },
+   "XssMatchSet":{  
+      "Properties":{  
+         "Name":{  
+            "Fn::Join":[  
+               "",
+               [  
+                  {  
+                     "Ref":"WebACLName"
+                  },
+                  "XssMatch"
+               ]
+            ]
+         },
+         "XssMatchTuples":[  
+            {  
+               "FieldToMatch":{  
+                  "Type":"QUERY_STRING"
+               },
+               "TextTransformation":"URL_DECODE"
+            },
+            {  
+               "FieldToMatch":{  
+                  "Type":"QUERY_STRING"
+               },
+               "TextTransformation":"HTML_ENTITY_DECODE"
+            },
+            {  
+               "FieldToMatch":{  
+                  "Type":"BODY"
+               },
+               "TextTransformation":"URL_DECODE"
+            },
+            {  
+               "FieldToMatch":{  
+                  "Type":"BODY"
+               },
+               "TextTransformation":"HTML_ENTITY_DECODE"
+            },
+            {  
+               "FieldToMatch":{  
+                  "Type":"URI"
+               },
+               "TextTransformation":"URL_DECODE"
+            }
+         ]
+      },
+      "Type":"AWS::WAFRegional::XssMatchSet"
+   },
+
+
 		"myDNSRecord" : {
       "Type" : "AWS::Route53::RecordSet",
       "Properties" : {
